@@ -60,7 +60,14 @@ def get_terminal_size():
 #      cr = (env['LINES'], env['COLUMNS'])
 #    except:
 #      cr = (25, 80)
-  return int(cr[0]), int(cr[1])
+
+  if cr[0]: row = int(cr[0])
+  else:     row = None
+
+  if cr[1]: col = int(cr[1])
+  else:     col = None
+
+  return (row, col)
 
 
 def get_line_width():
