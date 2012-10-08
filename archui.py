@@ -40,8 +40,8 @@ fc = {'done'  : '#g',
       'busy'  : '#c'
       }
 
-
 _last_status = ""
+
 
 def get_terminal_size():
   env = os.environ
@@ -131,6 +131,7 @@ def print_status(text=None, flag=None, nl=False):
   fwidth = 10
   mwidth = width - fwidth
 
+  global _last_status
   if text == None: text = _last_status
   else:            _last_status = text
 
