@@ -92,34 +92,34 @@ def color(s):
 
 
 def print_debug(t):
-  if debug: print(color("%g--> ") + t)
+  if debug: print_color("%g--> %s\n" % t, file=sys.stderr)
 
-def print_color(text):
-  print(color(text))
+def print_color(text, file=sys.stdout):
+  file.write('%s\n' % color(text))
 
 def print_message(text):
-  print_color(" " + text)
+  print_color(" %s\n" % text, file=sys.stdout)
 
 def print_error(text):
-  print(color('#rerror: #w' + text + '\n'), file=sys.stderr)
+  print_color('#rerror: #w%s\n' % text, file=sys.stderr)
 
 def print_warning(text):
-  print(color('#ywarning: #w' + text), file=sys.stderr)
+  print_color('#ywarning: #w%s\n' % text, file=sys.stderr)
 
 
 
 def print_item(text):
-  print(color('#b * #w' + text))
+  print_color('#b * #w%s\n' % text, file=sys.stdout)
 
 def print_heading(text):
-  print(color('#b > #w' + text))
+  print_color('#b > #w%s\n' % text, file=sys.stdout)
 
 def print_enum(i, n, text):
-  print(color('#b(%d/%d) #t%s' % (i, n, text)))
+  print_color('#b(%d/%d) #t%s\n' % (i, n, text), file=sys.stdout)
 
 
 
-def print_status(text, flag=None, nl=False):
+def print_status(text="", flag=None, nl=False):
   width = get_line_width()
   fwidth = 10
   mwidth = width - fwidth
@@ -133,11 +133,12 @@ def print_status(text, flag=None, nl=False):
     else:                          sta = '#b[#w%s#b]' % flag
 
     fmt = '\r#b:: #w{0:<%s}{1:>%s}' % (mwidth, fwidth)
-    sys.stdout.write(color(fmt.format(text, sta)))
-    if nl: sys.stdout.write('\n')
+    if nl: fmt = fmt + '\n'
+
+    print_color(fmt.format(text, sta), file=sys.stdout)
   else:
     fmt = '\r#b:: #w{0:<%s}\n' % 70
-    sys.stdout.write(color(fmt.format(text)))
+    print_color(fmt.format(text), file=sys.stdout)
 
 def print_progress(text, r):
   width = get_line_width()
@@ -153,7 +154,7 @@ def print_progress(text, r):
 
 
 def ask_question_string(question):
-  sys.stderr.write(color('#b ? #w' + question + " "))
+  print_color('#b ? #w%s ' % question, file=sys.stderr)
   return input()
 
 def ask_question_yesno(question, default=None):
@@ -166,4 +167,4 @@ def ask_question_yesno(question, default=None):
     if val == 'y':              return 'yes'
     elif val == 'n':            return 'no'
     elif default and val == '': return default
-    else: sys.stderr.write('Invalid answer.\n')
+    else: print_color('Invalid answer.\n')
