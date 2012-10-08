@@ -41,6 +41,8 @@ fc = {'done'  : '#g',
       }
 
 
+_last_status = ""
+
 def get_terminal_size():
   env = os.environ
   def ioctl_GWINSZ(fd):
@@ -124,10 +126,13 @@ def print_enum(i, n, text):
 
 
 
-def print_status(text="", flag=None, nl=False):
+def print_status(text=None, flag=None, nl=False):
   width = get_line_width()
   fwidth = 10
   mwidth = width - fwidth
+
+  if text == None: text = _last_status
+  else:            _last_status = text
 
   if flag:
     if flag.lower() in fc: col = fc[flag.lower()]
