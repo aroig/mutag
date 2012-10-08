@@ -97,12 +97,12 @@ def color(s):
   return ret
 
 
+def print_color(text, file=sys.stdout):
+  file.write('%s' % color(text))
+  file.flush()
 
 def print_debug(t):
   if debug: print_color("%g--> %s\n" % t, file=sys.stderr)
-
-def print_color(text, file=sys.stdout):
-  file.write('%s' % color(text))
 
 def print_message(text):
   print_color(" %s\n" % text, file=sys.stdout)
@@ -158,6 +158,7 @@ def print_progress(text, r):
   fmt = ' {0:<%s} [{1}] {2:3d}%%' % mwidth
 
   sys.stdout.write(fmt.format(text, barstr, int(100*r)))
+  sys.stdout.flush()
 
 
 
