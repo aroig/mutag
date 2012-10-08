@@ -35,6 +35,11 @@ cc = {"t"  : "\033[0m",      # reset
       }
 
 
+fc = {'done'  : '#g',
+      'fail'  : '#r',
+      'busy'  : '#c'
+      }
+
 
 def get_terminal_size():
   env = os.environ
@@ -95,7 +100,7 @@ def print_debug(t):
   if debug: print_color("%g--> %s\n" % t, file=sys.stderr)
 
 def print_color(text, file=sys.stdout):
-  file.write('%s\n' % color(text))
+  file.write('%s' % color(text))
 
 def print_message(text):
   print_color(" %s\n" % text, file=sys.stdout)
@@ -125,12 +130,9 @@ def print_status(text="", flag=None, nl=False):
   mwidth = width - fwidth
 
   if flag:
-    if flag.lower() == 'fail':     sta = '#b[#r%s#b]' % flag
-    elif flag.lower() == 'busy':   sta = '#b[#c%s#b]' % flag
-    elif flag.lower() == 'done':   sta = '#b[#g%s#b]' % flag
-    elif flag.lower() == 'start':  sta = '#b[#y%s#b]' % flag
-    elif flag.lower() == 'stop':   sta = '#b[#y%s#b]' % flag
-    else:                          sta = '#b[#w%s#b]' % flag
+    if flag.lower() in fc: col = fc[flag.lower()]
+    else:                  col = '#w'
+    sta = '#b[%s%s#b]' % (col, flag)
 
     fmt = '\r#b:: #w{0:<%s}{1:>%s}' % (mwidth, fwidth)
     if nl: fmt = fmt + '\n'
