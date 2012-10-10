@@ -126,10 +126,15 @@ def print_enum(i, n, text):
 
 
 
+# TODO: get rid of nl where I use it
 def print_status(text=None, flag=None, nl=False):
   width = get_line_width()
   fwidth = 10
   mwidth = width - fwidth
+
+  if re.match("^.*\n\s*$", text, re.MULTILINE): nl = True
+  else:                                         nl = False
+  text = text.strip()
 
   global _last_status
   if text == None: text = _last_status
