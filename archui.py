@@ -31,7 +31,15 @@ cc = {"t"  : "\033[0m",      # reset
       "b"  : "\033[1;34m",   # blue
       "m"  : "\033[1;35m",   # magenta
       "c"  : "\033[1;36m",   # cyan
-      "w"  : "\033[1;39m"    # white
+      "w"  : "\033[1;37m"    # white
+
+      "R"  : "\033[0;31m",   # dark red
+      "G"  : "\033[0;32m",   # dark green
+      "Y"  : "\033[0;33m",   # dark yellow
+      "B"  : "\033[0;34m",   # dark blue
+      "M"  : "\033[0;35m",   # dark magenta
+      "C"  : "\033[0;36m",   # dark cyan
+      "W"  : "\033[0;37m"    # dark white
       }
 
 
