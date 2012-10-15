@@ -21,8 +21,8 @@ import sys
 import re
 import os
 
-debug      = False
-use_color  = True
+_debug      = False
+_use_color  = True
 
 cc = {"t"  : "\033[0m",      # reset
       "r"  : "\033[1;31m",   # red
@@ -49,6 +49,16 @@ fc = {'done'  : '#g',
       }
 
 _last_status = ""
+
+
+def set_debug(dbg):
+  global _debug
+  _debug = dbg
+
+def use_color(cl):
+  global _use_color
+  _use_color = cl
+
 
 
 def get_terminal_size():
@@ -96,8 +106,9 @@ def strip_color(s):
   return re.sub('\033\[[0-9;]+m', '', s)
 
 def color(s):
+  global _use_color
   ret = s + '#t'
-  if use_color:
+  if _use_color:
     for k in cc: ret = ret.replace('#'+k, cc[k])
   else:
     for k in cc: ret = ret.replace('#'+k, '')
@@ -110,7 +121,8 @@ def print_color(text, file=sys.stdout):
   file.flush()
 
 def print_debug(t):
-  if debug: print_color("%g--> %s\n" % t, file=sys.stderr)
+  global _debug
+  if _debug: print_color("%g--> %s\n" % t, file=sys.stderr)
 
 def print_message(text):
   print_color(" %s\n" % text, file=sys.stdout)
