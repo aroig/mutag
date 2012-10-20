@@ -48,6 +48,8 @@ fc = {'done'  : '#g',
       'busy'  : '#c'
       }
 
+mc = '#b'
+
 _last_status = ""
 
 
@@ -58,6 +60,10 @@ def set_debug(dbg):
 def use_color(cl):
   global _use_color
   _use_color = cl
+
+def set_main_color(c):
+  global mc
+  mc = c
 
 
 
@@ -136,13 +142,13 @@ def print_warning(text):
 
 
 def print_item(text):
-  print_color('#b * #w%s\n' % text, file=sys.stdout)
+  print_color('%s * #w%s\n' % (mc, text), file=sys.stdout)
 
 def print_heading(text):
-  print_color('#b > #w%s\n' % text, file=sys.stdout)
+  print_color('%s > #w%s\n' % (mc, text), file=sys.stdout)
 
 def print_enum(i, n, text):
-  print_color('#b(%d/%d) #t%s\n' % (i, n, text), file=sys.stdout)
+  print_color('%s(%d/%d) #t%s\n' % (mc, i, n, text), file=sys.stdout)
 
 
 
@@ -163,14 +169,14 @@ def print_status(text=None, flag=None, nl=False):
   if flag:
     if flag.lower() in fc: col = fc[flag.lower()]
     else:                  col = '#w'
-    sta = '#b[%s%s#b]' % (col, flag)
+    sta = '%s[%s%s%s]' % (mc, col, flag, mc)
 
-    fmt = '\r#b:: #w{0:<%s}{1:>%s}' % (mwidth, fwidth)
+    fmt = '\r%s:: #w{0:<%s}{1:>%s}\r' % (mc, mwidth, fwidth)
     if nl: fmt = fmt + '\n'
 
     print_color(fmt.format(text, sta), file=sys.stdout)
   else:
-    fmt = '\r#b:: #w{0:<%s}\n' % 70
+    fmt = '\r%s:: #w{0:<%s}\n' % (mc, width)
     print_color(fmt.format(text), file=sys.stdout)
 
 def print_progress(text, r):
@@ -188,7 +194,7 @@ def print_progress(text, r):
 
 
 def ask_question_string(question):
-  print_color('#b ? #w%s ' % question, file=sys.stderr)
+  print_color('%s ? #w%s ' % (mc, question), file=sys.stderr)
   return input()
 
 def ask_question_yesno(question, default=None):
