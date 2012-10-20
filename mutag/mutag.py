@@ -30,7 +30,7 @@ from mutag.message import Message
 # TODO: establish some user interface guidelines
 
 class MutagError(Exception):
-  self __init__(self, msg=None):
+  def __init__(self, msg=None):
     super().__init(msg)
 
 
@@ -51,13 +51,13 @@ class Mutag(object):
     return ret.encode('utf-8')
 
   def _import_module(path):
-    return = __import__(path, globals(), locals(), [''])
+    return __import__(path, globals(), locals(), [''])
 
 
   def get_last_mtime(self):
     path = os.path.expanduser(self.conf.get('paths', 'lastmtime'))
     try:
-      with open(path, 'r') as fd
+      with open(path, 'r') as fd:
         mtime = long(fd.read())
     except OSError:
       mtime = 0
@@ -66,7 +66,7 @@ class Mutag(object):
 
   def save_last_mtime(self, mtime):
     path = os.path.expanduser(self.conf.get('paths', 'lastmtime'))
-    with open(path, 'w') as fd
+    with open(path, 'w') as fd:
       fd.write(str(mtime))
 
 

@@ -17,39 +17,44 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION=0.1
-SHELL=/bin/bash
+SHELL = bash
+PYTHON = python3
 
 NAME = mutag
+VERSION=$(shell $(PYTHON) $(NAME).py --version)
+
 PREFIX ?= /usr
 MANDIR ?= $(PREFIX)/share/man/man1
 DOCDIR ?= $(PREFIX)/share/doc/$(NAME)
 ZSHDIR ?= $(PREFIX)/share/zsh/site-functions
 BASHDIR ?= /etc/bash_completion.d
 
-all: build
+.PHONY: all man install clean build
+
+all: build man
 
 build:
-	python setup.py build --executable="/usr/bin/env python3"
+	ln -svf ../$(NAME).py bin/$(NAME)
+	$(PYTHON) setup.py build --executable="/usr/bin/env $(PYTHON)"
 	@echo
-	@echo "Build process finished, run 'python setup.py install' to install" \
-		"or 'python setup.py --help' for more information".
+	@echo "Build process finished, run '$(PYTHON) setup.py install' to install" \
+		"or '$(PYTHON) setup.py --help' for more information".
 
 clean:
 	-python setup.py clean --all
 	-find . -name '*.pyc' -exec rm -f {} \;
 	-find . -name '.cache*' -exec rm -f {} \;
 	-find . -name '*.html' -exec rm -f {} \;
-	@$(MAKE) -C docs clean
+	@make -C man clean
 
 man:
-	@$(MAKE) -C docs man
+	@make -C man man
 
 install:
-	python setup.py install --prefix=$(DESTDIR)$(PREFIX)
-#	@install -Dm755 completion/zsh/_$(NAME) $(DESTDIR)$(ZSHDIR)/_$(NAME)
+	$(PYTHON) setup.py install --prefix=$(DESTDIR)$(PREFIX)
+	@install -Dm755 completion/zsh/_$(NAME) $(DESTDIR)$(ZSHDIR)/_$(NAME)
 #	@install -Dm755 completion/bash/$(NAME) $(DESTDIR)$(BASHDIR)/$(NAME)
-	@install -Dm644 docs/$(NAME).1 $(DESTDIR)$(MANDIR)/$(NAME).1
-	@install -Dm644 docs/PKGBUILD.user $(DESTDIR)$(DOCDIR)/PKGBUILD.user
+	@install -Dm644 man/$(NAME).1 $(DESTDIR)$(MANDIR)/$(NAME).1
 	@install -Dm644 README $(DESTDIR)$(DOCDIR)/README
-	@install -Dm644 conf/$(NAME).conf $(DESTDIR)$(DOCDIR)/$(NAME).conf.example
+#	@cp -R docs/* $(DESTDIR)$(DOCDIR)
+	@cp -R conf $(DESTDIR)$(DOCDIR)/config

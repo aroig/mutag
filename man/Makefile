@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# paur - A unified interface to pacman and AUR
+# mutag - A tagging tool for mails indexed by mu
 # Copyright 2012 Abdó Roig-Maranges <abdo.roig@gmail.com>
 #
 #   This program is free software: you can redistribute it and/or modify
@@ -19,11 +19,12 @@
 
 SOURCES = $(wildcard *.rst)
 HTML_TARGETS = $(patsubst %.rst,%.html,$(SOURCES))
-MAN_TARGETS = mutag.1
+MAN_TARGETS = $(patsubst %.1.rst,%.1,$(SOURCES))
 
-RM = rm
 RST2HTML=`type rst2html >/dev/null 2>&1 && echo rst2html || echo rst2html.py`
 RST2MAN=`type rst2man >/dev/null 2>&1 && echo rst2man || echo rst2man.py`
+
+.PHONY: clean
 
 all: man html
 
@@ -38,7 +39,5 @@ $(MAN_TARGETS): % : %.rst
 	$(RST2MAN) $? $@
 
 clean:
-	$(RM) -f $(HTML_TARGETS)
-	$(RM) -f $(MAN_TARGETS)
-
-.PHONY: clean
+	-rm -f $(HTML_TARGETS)
+	-rm -f $(MAN_TARGETS)

@@ -17,7 +17,6 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__version__ = "0.1"
 
 import os
 import sys
@@ -26,6 +25,9 @@ from optparse import OptionParser, OptionGroup
 from configparser import RawConfigParser
 
 from mutag.mutag import Mutag
+
+__version__ = "0.1"
+
 
 def eval_command(opts, args):
   conf = RawConfigParser(defaults={})
@@ -81,8 +83,15 @@ parser.add_option("--muhome", action="store", type="string", default='~/.mu', de
 parser.add_option("--maildir", action="store", type="string", default='~/Maildir', dest="maildir",
                   help="Path to the maildir where the actual messages are")
 
+parser.add_option("--version", action="store_true", default=False, dest="version",
+                  help="Print the version and exit")
+
 
 (opts, args) = parser.parse_args()
+
+if opts.version:
+  print(__version__)
+  sys.exit(0)
 
 try:
   eval_command(opts, args)
