@@ -18,9 +18,10 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from distutils.core import setup
+from mutag import __version__
 
 setup(name         = 'mutag',
-      version      = '0.1',
+      version      = __version__,
       license      = 'GNU GPLv3',
       description  = 'A tagging tool for mails indexed by mu',
       author       = 'Abdó Roig-Maranges',

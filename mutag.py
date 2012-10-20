@@ -25,8 +25,7 @@ from optparse import OptionParser, OptionGroup
 from configparser import RawConfigParser
 
 from mutag.mutag import Mutag
-
-__version__ = "0.1"
+from mutag import __version__
 
 
 def eval_command(opts, args):
@@ -43,7 +42,7 @@ def eval_command(opts, args):
                 maildir=opts.maildir)
 
   if opts.query == None:
-    print("No qery given")
+    print("No query given")
 
   # Get the messages
   L = mutag.query(opts.query, modified_only=opts.changed)
@@ -92,6 +91,7 @@ parser.add_option("--version", action="store_true", default=False, dest="version
 if opts.version:
   print(__version__)
   sys.exit(0)
+
 
 try:
   eval_command(opts, args)
