@@ -1,0 +1,26 @@
+(
+	:docid 23
+	:subject "Test 8"
+	:from (("Abdó Roig-Maranges" . "abdo.roig@upc.edu"))
+	:to ((nil . "abdo.roig2@gmail.com"))
+	:date (20265 23151 0)
+	:size 1961
+	:message-id "87vcnq7es0.fsf@gmail.com"
+	:path "/home/abdo/Projects/offlineimap-gmail/mail/All Mail/cur/1350601752_0.15371.grothendieck,U=25,FMD5=883ba13d52aa35908bd3344dc0604026:2,S"
+	:maildir "/All Mail"
+	:priority normal
+	:flags (seen)
+)
+(
+	:docid 8
+	:subject "Re: Consulta Funcional"
+	:from (("Abdó Roig-Maranges" . "abdo.roig@upc.edu"))
+	:to ((nil . "abdo.roig2@gmail.com"))
+	:date (20310 16789 0)
+	:size 3773
+	:message-id "87boo9d5yi.fsf@gmail.com"
+	:path "/home/abdo/Projects/offlineimap-gmail/mail/All Mail/cur/1350601752_1.15371.grothendieck,U=26,FMD5=883ba13d52aa35908bd3344dc0604026:2,S"
+	:maildir "/All Mail"
+	:priority normal
+	:flags (seen)
+)
