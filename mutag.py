@@ -48,11 +48,11 @@ def eval_command(opts, args):
   L = mutag.query(opts.query, modified_only=opts.changed)
 
   # Change tags
-  mutag.change_tags(L, args)
+  mutag.change_tags(L, args, dryrun=opts.dryrun)
 
   # Perform autotagging
   if opts.autotag:
-    mutag.autotag(L, opts.autotag)
+    mutag.autotag(L, opts.autotag, dryrun=opts.dryrun)
 
 
 
@@ -73,7 +73,7 @@ parser.add_option("-c", "--changed", action="store_true", default=False, dest="c
 parser.add_option("-a", "--autotag", action="store", type="string", default=None, dest="autotag",
                   help="Tag rule to apply")
 
-parser.add_option("-r", "--dryrun", action="store_true", default=False, dest="dryrun",
+parser.add_option("--dryrun", action="store_true", default=False, dest="dryrun",
                   help="Performs a dry run. Does not change anything on disk.")
 
 parser.add_option("--muhome", action="store", type="string", default='~/.mu', dest="muhome",

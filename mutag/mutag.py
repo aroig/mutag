@@ -102,6 +102,11 @@ class Mutag(object):
       return L
 
 
+  def print_tagschange(self, msg, oldtags, newtags):
+    # TODO
+    pass
+
+
   def change_tags(self, msglist, tagactions):
     for ta in tagactions:
       addtags = set()
@@ -116,10 +121,11 @@ class Mutag(object):
     for msg in msglist:
       tags = msg.get_tags()
       newtags = tags.union(addtags).difference(deltags)
-      msg.set_tags(newtags)
+      self.print_tagschange(msg, tags, newtags)
+      if not dryrun: msg.set_tags(newtags)
 
 
-  def autotag(self, msglist, tagrules):
+  def autotag(self, msglist, tagrules, dryrun=False):
     trpath = os.path.join(bla, 'tagrules', tagrules + '.py')
     if not os.path.exists(trpath):
       print("Can't find tagrules file %s.py." % tagrules)
@@ -132,4 +138,5 @@ class Mutag(object):
       tags = msg.get_tags()
       newtags = tr.get_tags(msg)
       if tags != newtags:
-        msg.set_tags(newtags)
+        self.print_tagschange(msg, tags, newtags)
+        if not dryrun: msg.set_tags(newtags)
