@@ -24,6 +24,7 @@ import sys
 from optparse import OptionParser, OptionGroup
 from configparser import RawConfigParser
 
+import mutag.archui as ui
 from mutag.mutag import Mutag
 from mutag import __version__
 
@@ -33,13 +34,12 @@ def eval_command(opts, args):
   conf.read([os.path.expanduser('~/.config/mutag/mutag.conf')])
   ui.set_debug(opts.debug)
 
-  # ui.use_color(conf.getboolean("paur", 'color'))
+  ui.use_color(conf.getboolean("mutag", 'color'))
   # If the output is not a terminal, remove the colors
-  # if not sys.stdout.isatty(): ui.use_color(False)
+  if not sys.stdout.isatty(): ui.use_color(False)
 
   mutag = Mutag(conf=conf,
-                muhome=opts.muhome,
-                maildir=opts.maildir)
+                muhome=opts.muhome)
 
   if opts.query == None:
     print("No query given")
@@ -47,12 +47,19 @@ def eval_command(opts, args):
   # Get the messages
   L = mutag.query(opts.query, modified_only=opts.changed)
 
-  # Change tags
-  mutag.change_tags(L, args, dryrun=opts.dryrun)
-
-  # Perform autotagging
   if opts.autotag:
+    # Perform autotagging
     mutag.autotag(L, opts.autotag, dryrun=opts.dryrun)
+
+  elif len(args) == 0:
+    # List the messages matching the query
+    for msg in L:
+      ui.print_color(msg.tostring(fmt='compact'))
+
+  else:
+    # Change tags
+    mutag.change_tags(L, args, dryrun=opts.dryrun)
+
 
 
 
@@ -79,11 +86,12 @@ parser.add_option("--dryrun", action="store_true", default=False, dest="dryrun",
 parser.add_option("--muhome", action="store", type="string", default='~/.mu', dest="muhome",
                   help="Path to the mu database")
 
-parser.add_option("--maildir", action="store", type="string", default='~/Maildir', dest="maildir",
-                  help="Path to the maildir where the actual messages are")
-
 parser.add_option("--version", action="store_true", default=False, dest="version",
                   help="Print the version and exit")
+
+parser.add_option("--debug", action="store_true", default=False, dest="debug",
+                  help="Print debug information")
+
 
 
 (opts, args) = parser.parse_args()

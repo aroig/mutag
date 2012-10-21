@@ -21,24 +21,27 @@
 import os
 import re
 import sys
+import imp
 import subprocess
 from datetime import datetime
 
 from mutag.sexparser import parse_sexp
 from mutag.message import Message
+import mutag.archui as ui
 
 # TODO: establish some user interface guidelines
 
 class MutagError(Exception):
   def __init__(self, msg=None):
-    super().__init(msg)
+    super().__init__(msg)
 
 
 class Mutag(object):
-  def __init__(self, conf, muhome, maildir):
+  def __init__(self, conf, muhome):
     self.conf = conf
     self.muhome = muhome
-    self.maildir = maildir
+    self.tagrules_path = os.path.expanduser(self.conf.get('paths', 'tagrules'))
+
 
   def _mu(self, cmd, args):
     mu_cmd = 'mu'
@@ -47,11 +50,12 @@ class Mutag(object):
     except subprocess.CalledProcessError:
       print("Something went wrong")
       raise
+    return ret.decode('utf-8')
 
-    return ret.encode('utf-8')
 
-  def _import_module(path):
-    return __import__(path, globals(), locals(), [''])
+  def _import_module(self, name):
+    file, pathname, desc = imp.find_module(name, path=[self.tagrules_path])
+    return imp.load_module(name, file, pathname, desc)
 
 
   def get_last_mtime(self):
@@ -71,21 +75,34 @@ class Mutag(object):
 
 
   def _parse_msgsexp(self, sexp):
-    data = parse_sexp(sexpdata)
+    data = parse_sexp(sexp)
     L = []
-    for s in data:
+    for d in data:
       msg = Message()
 
-      for k in ['docid', 'maildir', 'message-id', 'path', 'priority', 'size', 'subject']:
-        msg[k] = data[k]
+      for k in ['docid', 'maildir', 'message-id', 'path', 'priority', 'size']:
+        if k in d: msg[k] = d[k]
+        else:      msg[k] = None
+
+      for k in ['subject']:
+        if k in d: msg[k] = d[k]
+        else:      msg[k] = ""
 
       for k in ['from', 'to']:
-        msg[k] = {'name': d[k][0], 'email':d[k][1]}
+        if k in d: msg[k] = [{'name': x[0], 'email':x[1]} for x in d[k]]
+        else:      msg[k] = []
 
-      for k in ['flags']:
-        msg[k] = set(d[k])
+        if k in d: msg[k+'str'] = ', '.join(['%s <%s>' % (x['name'], x['email']) for x in msg[k]])
+        else:      msg[k+'str'] = ''
 
-      msg['date'] = datetime.fromtimestamp(d[0]*0xFFFF + d[1])
+      msg['emails'] = set([ad['email'] for ad in msg['to']]).union([ad['email'] for ad in msg['from']])
+
+      for k in ['flags', 'tags']:
+        if k in d: msg[k] = set(d[k])
+        else:      msg[k] = None
+
+      if 'date' in d: msg['date'] = datetime.fromtimestamp(d['date'][0]*0xFFFF + d['date'][1])
+      else:           msg['date'] = None
 
       L.append(msg)
     return L
@@ -94,7 +111,6 @@ class Mutag(object):
   def query(self, query, modified_only=False):
     sexpdata = self._mu('find', [query, '--format', 'sexp'])
     L = self._parse_msgsexp('(%s)' % sexpdata)
-
     if modified_only:
       mtime = self.get_last_mtime()
       return [msg for msg in L if msg.get_mtime() >= mtime]
@@ -103,17 +119,23 @@ class Mutag(object):
 
 
   def print_tagschange(self, msg, oldtags, newtags):
-    # TODO
-    pass
+    alltags = oldtags.union(newtags)
+    L = []
+    for t in sorted(alltags):
+      if t in oldtags and t in newtags:       L.append('#W%s' % t)
+      elif t in oldtags and not t in newtags: L.append('#R-%s' % t)
+      elif not t in oldtags and t in newtags: L.append('#G+%s' % t)
+    tagch = ' '.join(L)
+    ui.print_color('#C{0} {1}\n'.format(msg['subject'], tagch))
 
 
-  def change_tags(self, msglist, tagactions):
+  def change_tags(self, msglist, tagactions, dryrun=False):
+    addtags = set()
+    deltags = set()
     for ta in tagactions:
-      addtags = set()
-      deltags = set()
-
       mdel = re.search('^\s*-(.*)\s*$', ta)
       madd = re.search('^\s*\+(.*)\s*$', ta)
+
       if mdel:   deltags.add(mdel.group(1))
       elif madd: addtags.add(madd.group(1))
       else:      addtags.add(ta.strip())
@@ -126,13 +148,17 @@ class Mutag(object):
 
 
   def autotag(self, msglist, tagrules, dryrun=False):
-    trpath = os.path.join(bla, 'tagrules', tagrules + '.py')
-    if not os.path.exists(trpath):
-      print("Can't find tagrules file %s.py." % tagrules)
-      raise MutagError()
+    try:
+      rules = self._import_module(tagrules)
+    except ImportError:
+      ui.print_error("Can't find tagrules path %s" % self.tagrules_path)
+      return
 
-    rules = self._import_module(trpath)
-    tr = rules.TagRules()
+    try:
+      tr = rules.TagRules()
+    except AttributeError:
+      ui.print_error("Can't find class TagRules in %s.py" % tagrules)
+      return
 
     for msg in msglist:
       tags = msg.get_tags()

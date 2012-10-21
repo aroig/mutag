@@ -18,6 +18,8 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
+import sys
 
 from email.parser import Parser
 from email import charset
@@ -32,6 +34,16 @@ class Message(dict):
     self.msg = None
     self.headers = None
     self.tagsheader = 'X-Keywords'
+
+
+  def tostring(self, fmt='compact'):
+    if fmt == 'compact':
+      if len(self['from']) > 0:
+        author = '%s <%s>' % (self['from'][0]['name'], self['from'][0]['email'])
+      else:
+        author = ' <none> '
+      return '#M{0} #C{1} #G{2}\n'.format(str(self['date']), author, str(self['subject']))
+
 
 
   def load_message(self):
@@ -81,9 +93,9 @@ class Message(dict):
     else:
       newline = "\n"
 
-    if re.search('^%s:(.*)\n' % headername, leader + '\n', re.MULTILINE):
-      leader = re.sub('%s:(.*)\n', '%s: %s\n' % (headername, headervalue),
-                        leader)
+    if re.search('^%s:(.*)$' % headername, leader, flags = re.MULTILINE):
+      leader = re.sub('^%s:(.*)$' % headername, '%s: %s' % (headername, headervalue), leader,
+                      flags = re.MULTILINE)
     else:
       leader = leader + newline + "%s: %s" % (headername, headervalue)
 
@@ -100,7 +112,9 @@ class Message(dict):
     content = self.message_addheader(content, self.tagsheader, tags_str)
 
     # save changed file into temp path
-    tmppath = os.path.join(os.path.basename(os.path.dirname(self['path'])), 'tmp', os.path.basename(self['path']))
+    parent = os.path.dirname(os.path.dirname(self['path']))
+    tmppath = os.path.join(parent, 'tmp', os.path.basename(self['path']))
+
     with open(tmppath, 'w') as fd:
       fd.write(content)
 
@@ -113,5 +127,7 @@ class Message(dict):
 
 
   def __str__(self):
+    ret = ""
     for k in self:
-      print('{0>10}: {1}'.format(k, str(self[k])))
+      ret = ret + '{0}: {1}\n'.format(k, str(self[k]))
+    return ret
