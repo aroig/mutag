@@ -26,5 +26,5 @@ setup(name         = 'mutag',
       description  = 'A tagging tool for mails indexed by mu',
       author       = 'Abdó Roig-Maranges',
       author_email = 'abdo.roig@gmail.com',
-      packages     = ['mutag'],
+      packages     = ['mutag', 'mutag.archui'],
       scripts      = ['bin/mutag'])
