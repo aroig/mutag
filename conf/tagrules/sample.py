@@ -62,8 +62,7 @@ class TagRules(object):
 
     # Rules to apply
     self.rules = [
-      ('maildir',      self._tags_maildir),
-      ('contacts',     self._tags_taglist)
+      ('contacts',     self._tags_taglist),
       # Whatever rules you like to apply
       ]
 
@@ -83,14 +82,6 @@ class TagRules(object):
 
   # The tagging rules
   # --------------------------
-
-  # apply tags associated to the maildir.
-  # msg: the message
-  # tags: a set of currently computed tags.
-    def _tags_maildir(self, msg, tags):
-    if 'Work' in msg['maildir']:   tags.add('work')
-    elif 'Spam' in msg['maildir']: tags.add('spam')
-
 
   # apply tags according to the taglist dictionary.
   # msg: the message

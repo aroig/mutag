@@ -22,14 +22,13 @@ import os
 import re
 import sys
 import imp
+import glob
+import shlex
 import subprocess
-from datetime import datetime
 
-from mutag.sexparser import parse_sexp
+import mutag.plistseq as plistseq
 from mutag.message import Message
 import mutag.archui as ui
-
-# TODO: establish some user interface guidelines
 
 class MutagError(Exception):
   def __init__(self, msg=None):
@@ -37,96 +36,116 @@ class MutagError(Exception):
 
 
 class Mutag(object):
-  def __init__(self, conf, muhome):
-    self.conf = conf
-    self.muhome = muhome
-    self.tagrules_path = os.path.expanduser(self.conf.get('paths', 'tagrules'))
+  def __init__(self, prof):
+    self.muhome = prof['muhome']
+    self.maildir = prof['maildir']
+    self.tagrules_path = prof['tagrules']
+    self.lastmtime_path = prof['lastmtime']
 
 
-  def _mu(self, cmd, args):
+  def _mu(self, cmd, args, catchout=False, silent=False):
     mu_cmd = 'mu'
-    try:
-      ret = subprocess.check_output([mu_cmd, cmd, '--muhome', self.muhome] + args)
-    except subprocess.CalledProcessError:
-      print("Something went wrong")
-      raise
-    return ret.decode('utf-8')
+    with open('/dev/null', 'w') as devnull:
+      if silent: out = devnull
+      else:      out = None
+      cmd_args = [mu_cmd, cmd, '--muhome', self.muhome] + args
+      if catchout:
+        ret = subprocess.check_output(cmd_args, stderr=out)
+        return ret.decode('utf-8')
+      else:
+        subprocess.check_call(cmd_args, stdout=out, stderr=out)
 
 
-  def _import_module(self, name):
-    file, pathname, desc = imp.find_module(name, path=[self.tagrules_path])
+  def _import_module(self, path):
+    name = os.path.basename(path).split('.')[0]
+    dirname = os.path.dirname(path)
+    file, pathname, desc = imp.find_module(name, path=[dirname])
     return imp.load_module(name, file, pathname, desc)
 
 
+  def _parse_msgsexp(self, sexpstr):
+    data = plistseq.parse(sexpstr)
+    L = []
+    for d in data:
+      msg = Message()
+      msg.from_mudict(d)
+      L.append(msg)
+    return L
+
+
+  def get_maildir_files(self):
+    files = []
+    for fd in os.listdir(self.maildir):
+      path = os.path.join(self.maildir, fd)
+      if os.path.isdir(path) and not os.path.exists(os.path.join(path, ".noindex")):
+        for mp in glob.glob(os.path.join(path, '*/*')):
+          if os.path.isfile(mp):
+            files.append(mp)
+    return files
+
+
   def get_last_mtime(self):
-    path = os.path.expanduser(self.conf.get('paths', 'lastmtime'))
     try:
-      with open(path, 'r') as fd:
-        mtime = long(fd.read())
+      with open(self.lastmtime_path, 'r') as fd:
+        mtime = int(fd.read())
     except OSError:
       mtime = 0
     return mtime
 
 
   def save_last_mtime(self, mtime):
-    path = os.path.expanduser(self.conf.get('paths', 'lastmtime'))
-    with open(path, 'w') as fd:
+    with open(self.lastmtime_path, 'w') as fd:
       fd.write(str(mtime))
 
 
-  def _parse_msgsexp(self, sexp):
-    data = parse_sexp(sexp)
+  def modified(self, mtime=None):
     L = []
-    for d in data:
-      msg = Message()
-
-      for k in ['docid', 'maildir', 'message-id', 'path', 'priority', 'size']:
-        if k in d: msg[k] = d[k]
-        else:      msg[k] = None
-
-      for k in ['subject']:
-        if k in d: msg[k] = d[k]
-        else:      msg[k] = ""
-
-      for k in ['from', 'to']:
-        if k in d: msg[k] = [{'name': x[0], 'email':x[1]} for x in d[k]]
-        else:      msg[k] = []
-
-        if k in d: msg[k+'str'] = ', '.join(['%s <%s>' % (x['name'], x['email']) for x in msg[k]])
-        else:      msg[k+'str'] = ''
-
-      msg['emails'] = set([ad['email'] for ad in msg['to']]).union([ad['email'] for ad in msg['from']])
-
-      for k in ['flags', 'tags']:
-        if k in d: msg[k] = set(d[k])
-        else:      msg[k] = None
-
-      if 'date' in d: msg['date'] = datetime.fromtimestamp(d['date'][0]*0xFFFF + d['date'][1])
-      else:           msg['date'] = None
-
-      L.append(msg)
+    if mtime == None: mtime = self.get_last_mtime()
+    for mp in self.get_maildir_files():
+      mt = int(os.stat(mp).st_mtime)
+      if mt > mtime:
+        msg = Message()
+        msg.from_file(mp, maildir=self.maildir)
+        L.append(msg)
     return L
 
 
   def query(self, query, modified_only=False):
-    sexpdata = self._mu('find', [query, '--format', 'sexp'])
-    L = self._parse_msgsexp('(%s)' % sexpdata)
-    if modified_only:
-      mtime = self.get_last_mtime()
-      return [msg for msg in L if msg.get_mtime() >= mtime]
+    # None query matches all
+    if query == None:
+      qlist = ['']
     else:
-      return L
+      qlist = shlex.split(query)
+
+    # Return a list of modified messages
+    if modified_only:
+      return self.modified()
+
+    # Otherwise make a query to mu
+    try:
+      sexpdata = self._mu('find', ['--format', 'sexp'] + qlist, silent=True, catchout=True)
+      L = self._parse_msgsexp(sexpdata)
+    except subprocess.CalledProcessError as err:
+      if err.returncode == 4:   # No results
+        L = []
+      else:
+        raise
+    return L
+
+
+  def count(self, query, modified_only=False):
+    return len(self.query(query, modified_only))
 
 
   def print_tagschange(self, msg, oldtags, newtags):
     alltags = oldtags.union(newtags)
     L = []
     for t in sorted(alltags):
-      if t in oldtags and t in newtags:       L.append('#W%s' % t)
+      if t in oldtags and t in newtags:       L.append('#Y%s' % t)
       elif t in oldtags and not t in newtags: L.append('#R-%s' % t)
       elif not t in oldtags and t in newtags: L.append('#G+%s' % t)
-    tagch = ' '.join(L)
-    ui.print_color('#C{0} {1}\n'.format(msg['subject'], tagch))
+    tagch = '#W, '.join(L)
+    ui.print_color('#C{0} #W[{1}#W]\n'.format(msg['subject'], tagch))
 
 
   def change_tags(self, msglist, tagactions, dryrun=False):
@@ -143,13 +162,14 @@ class Mutag(object):
     for msg in msglist:
       tags = msg.get_tags()
       newtags = tags.union(addtags).difference(deltags)
-      self.print_tagschange(msg, tags, newtags)
-      if not dryrun: msg.set_tags(newtags)
+      if tags != newtags:
+        self.print_tagschange(msg, tags, newtags)
+        if not dryrun: msg.set_tags(newtags)
 
 
-  def autotag(self, msglist, tagrules, dryrun=False):
+  def autotag(self, msglist, dryrun=False):
     try:
-      rules = self._import_module(tagrules)
+      rules = self._import_module(self.tagrules_path)
     except ImportError:
       ui.print_error("Can't find tagrules path %s" % self.tagrules_path)
       return
@@ -166,3 +186,14 @@ class Mutag(object):
       if tags != newtags:
         self.print_tagschange(msg, tags, newtags)
         if not dryrun: msg.set_tags(newtags)
+
+
+  def index(self, dryrun=False):
+    if not dryrun: self._mu('index', ['--maildir', self.maildir, '--autoupgrade'], catchout=False)
+
+
+  def update_mtime(self, dryrun=False):
+    L = self.get_maildir_files()
+    if len(L) > 0:
+      mtime = max([int(os.stat(mp).st_mtime) for mp in L])
+      if not dryrun: self.save_last_mtime(mtime)

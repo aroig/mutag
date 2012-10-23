@@ -21,9 +21,12 @@ import os
 import re
 import sys
 
+from datetime import datetime
 from email.parser import Parser
-from email import charset
+from email.header import decode_header
+import email.utils
 
+from email import charset
 # Set the email charset to quoted printable for headers and content.
 charset.add_charset('utf-8', charset.QP, charset.QP)
 
@@ -43,16 +46,103 @@ class Message(dict):
       else:
         author = ' <none> '
       return '#M{0} #C{1} #G{2}\n'.format(str(self['date']), author, str(self['subject']))
+    elif fmt == 'raw':
+      return str(self)
 
+
+  def _fill_derived_fields(self):
+    msg = self
+    for k in ['from', 'to']:
+      msg[k+'str'] = ', '.join(['%s <%s>' % (x['name'], x['email']) for x in self[k]])
+
+    msg['emails'] = set([ad['email'] for ad in msg['to']]).union([ad['email'] for ad in msg['from']])
+
+
+  def get_header(self, header):
+    if header in self.headers:
+      # TODO: may want to use self.headers.get_all(), which returns a list and catches all of the headers
+      raw = self.headers.get(header, "")
+      ret = ""
+      for txt, enc in decode_header(raw):
+        if enc:                ret = ret + str(txt, enc)
+        elif type(txt) != str: ret = ret + str(txt, 'utf-8')
+        else:                  ret = ret + txt
+      return ret
+    else:
+      return ""
+
+
+  def from_mudict(self, d):
+    msg = self
+
+    for k in ['docid', 'maildir', 'message-id', 'path', 'priority']:
+      if k in d: msg[k] = d[k]
+      else:      msg[k] = None
+
+    for k in ['subject']:
+      if k in d: msg[k] = d[k]
+      else:      msg[k] = ""
+
+    for k in ['from', 'to']:
+      if k in d: msg[k] = [{'name': x[0], 'email':x[1]} for x in d[k]]
+      else:      msg[k] = []
+
+    for k in ['flags', 'tags']:
+      if k in d: msg[k] = set(d[k])
+      else:      msg[k] = None
+
+    msg['size'] = int(d['size'])
+    if 'date' in d: msg['date'] = datetime.fromtimestamp(int(d['date'][0])*0xFFFF + int(d['date'][1]))
+    else:           msg['date'] = None
+
+    self._fill_derived_fields()
+
+
+
+  def from_file(self, path, maildir):
+    msg = self
+    msg['path'] = path
+    self.load_headers()
+    # TODO: priority, flags, size
+
+    # Parse filename
+    m = re.search('^(/[^/]*)/(cur|new|tmp)/(.*)$', path.replace(maildir, ''))
+    if m:
+      msg['maildir'] = m.group(1)
+      fname = m.group(3)
+      m = re.search('U=([0-9]*)', fname)
+      if m:
+        msg['docid'] = int(m.group(1))
+
+    # TODO: should I remove < > from message-id ?
+    msg['message-id'] = self.get_header('message-id')
+    msg['subject'] = self.get_header('subject')
+    datetup = email.utils.parsedate_tz(self.get_header('date'))
+    if datetup:
+      # TODO: implement proper handling of timezones!
+      utfoffset = datetup[9]
+      msg['date'] = datetime(*datetup[0:6])
+    else:
+      msg['date'] = None
+
+    msg['to'] = [{'name': x[0], 'email': x[1]} for x in email.utils.getaddresses([self.get_header('to')])]
+    msg['from'] = [{'name': x[0], 'email': x[1]} for x in email.utils.getaddresses([self.get_header('from')])]
+
+    if self.tagsheader in self.headers:
+      msg['tags'] = set([t.strip() for t in self.headers[self.tagsheader].split(',') if len(t.strip()) > 0])
+    else:
+      msg['tags'] = set()
+
+    self._fill_derived_fields()
 
 
   def load_message(self):
-    with open(self['path'], 'r') as fd:
+    with open(self['path'], 'r', errors='ignore') as fd:
       self.msg = Parser().parse(fd)
 
 
   def load_headers(self):
-    with open(self['path'], 'r') as fd:
+    with open(self['path'], 'r', errors='ignore') as fd:
       self.headers = Parser().parse(fd, headersonly=True)
 
 
@@ -61,7 +151,7 @@ class Message(dict):
       self.load_message()
 
     payload = self.msg.get_payload(decode=True)
-    return payload.decode('utf-8')
+    return payload
 
 
   def get_tags(self):
@@ -123,7 +213,7 @@ class Message(dict):
 
 
   def get_mtime(self):
-    return long(os.stat(self['path']).st_mtime)
+    return int(os.stat(self['path']).st_mtime)
 
 
   def __str__(self):

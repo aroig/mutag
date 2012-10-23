@@ -29,6 +29,26 @@ from mutag.mutag import Mutag
 from mutag import __version__
 
 
+def get_profile(conf, opts):
+
+  if opts.profile: name = opts.profile
+  else:            name = conf.get('mutag', 'defaultprofile')
+
+  # TODO: catch nonexistent profile
+
+  prof = {}
+  prof['muhome'] = os.path.expanduser(conf.get('profile %s' % name, 'muhome'))
+  prof['maildir'] = os.path.expanduser(conf.get('profile %s' % name, 'maildir'))
+  prof['lastmtime'] = os.path.expanduser(conf.get('profile %s' % name, 'lastmtime'))
+  prof['tagrules'] = os.path.expanduser(conf.get('profile %s' % name, 'tagrules'))
+
+  if opts.muhome: prof['muhome'] = os.path.expanduser(opts.muhome)
+  if opts.muhome: prof['maildir'] = os.path.expanduser(opts.maildir)
+
+  return prof
+
+
+
 def eval_command(opts, args):
   conf = RawConfigParser(defaults={})
   conf.read([os.path.expanduser('~/.config/mutag/mutag.conf')])
@@ -38,27 +58,34 @@ def eval_command(opts, args):
   # If the output is not a terminal, remove the colors
   if not sys.stdout.isatty(): ui.use_color(False)
 
-  mutag = Mutag(conf=conf,
-                muhome=opts.muhome)
+  prof = get_profile(conf, opts)
+  mutag = Mutag(prof = prof)
 
-  if opts.query == None:
-    print("No query given")
+  if opts.cmd == 'autotag':
+    L = mutag.query(opts.query, modified_only=opts.modified)
+    mutag.autotag(L, dryrun=opts.dryrun)
 
-  # Get the messages
-  L = mutag.query(opts.query, modified_only=opts.changed)
+  elif opts.cmd == 'count':
+    num = mutag.count(opts.query, modified_only=opts.modified)
+    print(num)
 
-  if opts.autotag:
-    # Perform autotagging
-    mutag.autotag(L, opts.autotag, dryrun=opts.dryrun)
+  elif opts.cmd == 'dedup':
+    # TODO
+    print("dedup not implemented")
+    sys.exit()
 
-  elif len(args) == 0:
-    # List the messages matching the query
-    for msg in L:
-      ui.print_color(msg.tostring(fmt='compact'))
-
-  else:
-    # Change tags
+  elif opts.cmd == 'tag':
+    L = mutag.query(opts.query, modified_only=opts.modified)
     mutag.change_tags(L, args, dryrun=opts.dryrun)
+
+  elif opts.cmd == 'list':
+    L = mutag.query(opts.query, modified_only=opts.modified)
+    for msg in L:
+      ui.print_color(msg.tostring(fmt=opts.format))
+
+  if opts.index: mutag.index(dryrun=opts.dryrun)
+  if opts.update: mutag.update_mtime(dryrun=opts.dryrun)
+
 
 
 
@@ -71,20 +98,52 @@ usage = """usage: %prog [options] [-q <query>] <tags>
 
 parser = OptionParser(usage=usage)
 
+# Commands
+parser.add_option("-C", "--count", action="store_const", const="count", default=None, dest="cmd",
+                  help="Count messages")
+
+parser.add_option("-A", "--autotag", action="store_const", const="autotag", default=None, dest="cmd",
+                  help="Tag rule to apply")
+
+parser.add_option("-D", "--dedup", action="store_const", const="dedup", default=None, dest="cmd",
+                  help="Remove duplicate message with same uid content on same folder")
+
+parser.add_option("-T", "--tag", action="store_const", const="tag", default=None, dest="cmd",
+                  help="Change tags")
+
+parser.add_option("-L", "--list", action="store_const", const="list", default=None, dest="cmd",
+                  help="List messages")
+
+
+# Options
 parser.add_option("-q", "--query", action="store", type="string", default=None, dest="query",
                   help="mu query to which the action is restricted. Default is none")
 
-parser.add_option("-c", "--changed", action="store_true", default=False, dest="changed",
-                  help="Restricts to messages that changed on disk since last run")
+parser.add_option("-p", "--profile", action="store", type="string", default=None, dest="profile",
+                  help="Select a configuration profile")
 
-parser.add_option("-a", "--autotag", action="store", type="string", default=None, dest="autotag",
-                  help="Tag rule to apply")
+parser.add_option("-f", "--format", action="store", type="string", default='compact', dest="format",
+                  help="Format to print output")
+
+parser.add_option("-m", "--modified", action="store_true", default=False, dest="modified",
+                  help="Restricts to messages that are modified since last call to mutag -u")
+
+parser.add_option("-u", "--update", action="store_true", default=False, dest="update",
+                  help="Update the stored modification time with the most recent mod time in the database.")
+
+parser.add_option("-i", "--index", action="store_true", default=False, dest="index",
+                  help="Index new messages")
+
+
 
 parser.add_option("--dryrun", action="store_true", default=False, dest="dryrun",
                   help="Performs a dry run. Does not change anything on disk.")
 
-parser.add_option("--muhome", action="store", type="string", default='~/.mu', dest="muhome",
+parser.add_option("--muhome", action="store", type="string", default=None, dest="muhome",
                   help="Path to the mu database")
+
+parser.add_option("--maildir", action="store", type="string", default=None, dest="maildir",
+                  help="Path to maildir")
 
 parser.add_option("--version", action="store_true", default=False, dest="version",
                   help="Print the version and exit")
