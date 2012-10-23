@@ -111,11 +111,11 @@ class Mutag(object):
 
 
   def query(self, query, modified_only=False):
-    # None query matches all
-    if query == None:
-      qlist = ['']
-    else:
-      qlist = shlex.split(query)
+    # None query matches nothing
+    if query == None: return []
+
+    # split the query string
+    qlist = shlex.split(query)
 
     # Return a list of modified messages
     if modified_only:
