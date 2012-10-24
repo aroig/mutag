@@ -64,6 +64,7 @@ def eval_command(opts, args):
   if opts.cmd == 'autotag':
     L = mutag.query(opts.query, path = opts.path, modified_only=opts.modified)
     mutag.autotag(L, dryrun=opts.dryrun)
+    if opts.index and len(L) > 0: mutag.index(dryrun=opts.dryrun)
 
   elif opts.cmd == 'count':
     num = mutag.count(opts.query, modified_only=opts.modified)
@@ -77,6 +78,7 @@ def eval_command(opts, args):
   elif opts.cmd == 'tag':
     L = mutag.query(opts.query, path = opts.path, modified_only=opts.modified)
     mutag.change_tags(L, args, dryrun=opts.dryrun)
+    if opts.index and len(L) > 0: mutag.index(dryrun=opts.dryrun)
 
   elif opts.cmd == 'list':
     L = mutag.query(opts.query, path = opts.path, modified_only=opts.modified)
@@ -88,9 +90,10 @@ def eval_command(opts, args):
     for msg in L:
       print(msg.raw())
 
+  # Index if asked to and not done in a specific command
+  if opts.index and not opts.cmd in ['autotag', 'tag']: mutag.index(dryrun=opts.dryrun)
 
-
-  if opts.index: mutag.index(dryrun=opts.dryrun)
+  # Update mtime
   if opts.update: mutag.update_mtime(dryrun=opts.dryrun)
 
 
