@@ -62,7 +62,7 @@ def eval_command(opts, args):
   mutag = Mutag(prof = prof)
 
   if opts.cmd == 'autotag':
-    L = mutag.query(opts.query, modified_only=opts.modified)
+    L = mutag.query(opts.query, path = opts.path, modified_only=opts.modified)
     mutag.autotag(L, dryrun=opts.dryrun)
 
   elif opts.cmd == 'count':
@@ -75,11 +75,11 @@ def eval_command(opts, args):
     sys.exit()
 
   elif opts.cmd == 'tag':
-    L = mutag.query(opts.query, modified_only=opts.modified)
+    L = mutag.query(opts.query, path = opts.path, modified_only=opts.modified)
     mutag.change_tags(L, args, dryrun=opts.dryrun)
 
   elif opts.cmd == 'list':
-    L = mutag.query(opts.query, modified_only=opts.modified)
+    L = mutag.query(opts.query, path = opts.path, modified_only=opts.modified)
     for msg in L:
       ui.print_color(msg.tostring(fmt=opts.format))
 
@@ -115,18 +115,23 @@ parser.add_option("-L", "--list", action="store_const", const="list", default=No
                   help="List messages")
 
 
-# Options
+# queries
 parser.add_option("-q", "--query", action="store", type="string", default=None, dest="query",
                   help="mu query to which the action is restricted. Default is none")
 
+parser.add_option("-m", "--modified", action="store_true", default=False, dest="modified",
+                  help="Restricts to messages that are modified since last call to mutag -u")
+
+parser.add_option("-t", "--target", action="store", type="string", default=None, dest="path",
+                  help="Restrict to the message at the given path")
+
+
+# Options
 parser.add_option("-p", "--profile", action="store", type="string", default=None, dest="profile",
                   help="Select a configuration profile")
 
 parser.add_option("-f", "--format", action="store", type="string", default='compact', dest="format",
                   help="Format to print output")
-
-parser.add_option("-m", "--modified", action="store_true", default=False, dest="modified",
-                  help="Restricts to messages that are modified since last call to mutag -u")
 
 parser.add_option("-u", "--update", action="store_true", default=False, dest="update",
                   help="Update the stored modification time with the most recent mod time in the database.")

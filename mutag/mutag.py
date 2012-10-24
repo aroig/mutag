@@ -98,9 +98,24 @@ class Mutag(object):
       fd.write(str(mtime))
 
 
-  def modified(self, mtime=None):
+  def parsefiles(self, filelist):
     L = []
-    if mtime == None: mtime = self.get_last_mtime()
+    for path in filelist:
+      path = os.path.abspath(os.path.expanduser(path))
+      if os.path.isfile(path):
+        if os.path.commonprefix([path, self.maildir]) == self.maildir:
+          msg = Message()
+          msg.from_file(path, maildir=self.maildir)
+          L.append(msg)
+        else:
+          ui.print_error("File does not belong to the configured maildir:\n%s" % path)
+      else:
+        ui.print_error("File does not exist:\n%s" % path)
+    return L
+
+
+  def modified(self, mtime):
+    L = []
     for mp in self.get_maildir_files():
       mt = int(os.stat(mp).st_mtime)
       if mt > mtime:
@@ -109,19 +124,9 @@ class Mutag(object):
         L.append(msg)
     return L
 
-
-  def query(self, query, modified_only=False):
-    # Return a list of modified messages
-    if modified_only:
-      return self.modified()
-
-    # None query matches nothing
-    if query == None: return []
-
+  def query_mu(self, query):
     # split the query string
     qlist = shlex.split(query)
-
-    # Otherwise make a query to mu
     try:
       sexpdata = self._mu('find', ['--format', 'sexp'] + qlist, silent=True, catchout=True)
       L = self._parse_msgsexp(sexpdata)
@@ -131,6 +136,18 @@ class Mutag(object):
       else:
         raise
     return L
+
+
+  def query(self, query=None, path=None, modified_only=False):
+    if path:
+      return self.parsefiles([path])
+    elif modified_only:
+      mtime = self.get_last_mtime()
+      return self.modified(mtime)
+    elif query:
+      return self.query_mu(query)
+    else:
+      return []
 
 
   def count(self, query, modified_only=False):
