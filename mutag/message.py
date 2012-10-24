@@ -50,6 +50,11 @@ class Message(dict):
       return str(self)
 
 
+  def raw(self):
+    with open(self['path'], 'r') as fd:
+      return fd.read()
+
+
   def _fill_derived_fields(self):
     msg = self
     for k in ['from', 'to']:

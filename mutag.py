@@ -83,6 +83,13 @@ def eval_command(opts, args):
     for msg in L:
       ui.print_color(msg.tostring(fmt=opts.format))
 
+  elif opts.cmd == 'print':
+    L = mutag.query(opts.query, path = opts.path, modified_only=opts.modified)
+    for msg in L:
+      print(msg.raw())
+
+
+
   if opts.index: mutag.index(dryrun=opts.dryrun)
   if opts.update: mutag.update_mtime(dryrun=opts.dryrun)
 
@@ -113,6 +120,10 @@ parser.add_option("-T", "--tag", action="store_const", const="tag", default=None
 
 parser.add_option("-L", "--list", action="store_const", const="list", default=None, dest="cmd",
                   help="List messages")
+
+parser.add_option("-P", "--print", action="store_const", const="print", default=None, dest="cmd",
+                  help="Print raw messages")
+
 
 
 # queries
