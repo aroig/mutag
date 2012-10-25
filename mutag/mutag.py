@@ -103,7 +103,9 @@ class Mutag(object):
     for path in filelist:
       path = os.path.abspath(os.path.expanduser(path))
       if os.path.isfile(path):
-        if os.path.commonprefix([path, self.maildir]) == self.maildir:
+        rpath = os.path.realpath(path)
+        rmaildir = os.path.realpath(self.maildir)
+        if os.path.commonprefix([rpath, rmaildir]) == rmaildir:
           msg = Message()
           msg.from_file(path, maildir=self.maildir)
           L.append(msg)
