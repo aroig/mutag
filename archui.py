@@ -153,13 +153,15 @@ def print_enum(i, n, text):
 
 
 # TODO: get rid of nl where I use it
-def print_status(text=None, flag=None, nl=False):
+def print_status(text=None, flag=None, nl=None):
   width = get_line_width()
   fwidth = 10
   mwidth = width - fwidth
 
-  if re.match("^.*\n\s*$", text, re.MULTILINE): nl = True
-  else:                                         nl = False
+  if nl == None:
+    if re.match("^.*\n\s*$", text, re.MULTILINE): nl = True
+    else:                                         nl = False
+
   text = text.strip()
 
   global _last_status
@@ -171,8 +173,9 @@ def print_status(text=None, flag=None, nl=False):
     else:                  col = '#w'
     sta = '%s[%s%s%s]' % (mc, col, flag, mc)
 
-    fmt = '\r%s:: #w{0:<%s}{1:>%s}\r' % (mc, mwidth, fwidth)
+    fmt = '\r%s:: #w{0:<%s}{1:>%s}' % (mc, mwidth, fwidth)
     if nl: fmt = fmt + '\n'
+    else: fmt = fmt + '\r'
 
     print_color(fmt.format(text, sta), file=sys.stdout)
   else:
