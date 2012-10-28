@@ -43,9 +43,11 @@ cc = {"t"  : "\033[0m",      # reset
       }
 
 
-fc = {'done'  : '#g',
-      'fail'  : '#r',
-      'busy'  : '#c'
+fc = {'done'  : '#G',
+      'fail'  : '#R',
+      'busy'  : '#Y',
+      'start' : '#G',
+      'stop'  : '#G'
       }
 
 mc = '#b'
@@ -170,7 +172,7 @@ def print_status(text=None, flag=None, nl=None):
 
   if flag:
     if flag.lower() in fc: col = fc[flag.lower()]
-    else:                  col = '#w'
+    else:                  col = '#W'
     sta = '%s[%s%s%s]' % (mc, col, flag, mc)
 
     fmt = '\r%s:: #w{0:<%s}{1:>%s}' % (mc, mwidth, fwidth)
