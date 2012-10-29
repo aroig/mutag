@@ -165,7 +165,6 @@ def print_status(text=None, flag=None, nl=None):
     else:                                         nl = False
 
   if text: text = text.strip()
-  else:    text = ""
 
   global _last_status
   if text == None: text = _last_status
