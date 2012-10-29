@@ -164,7 +164,8 @@ def print_status(text=None, flag=None, nl=None):
     if re.match("^.*\n\s*$", text, re.MULTILINE): nl = True
     else:                                         nl = False
 
-  text = text.strip()
+  if text: text = text.strip()
+  else:    text = ""
 
   global _last_status
   if text == None: text = _last_status
