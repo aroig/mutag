@@ -130,7 +130,7 @@ def print_color(text, file=sys.stdout):
 
 def print_debug(t):
   global _debug
-  if _debug: print_color("%g--> %s\n" % t, file=sys.stderr)
+  if _debug: print_color("#g--> %s\n" % t, file=sys.stderr)
 
 def print_message(text):
   print_color(" %s\n" % text, file=sys.stdout)
