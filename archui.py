@@ -21,7 +21,7 @@ import sys
 import re
 import os
 
-_debug      = False
+_debug      = 0
 _use_color  = True
 
 cc = {"t"  : "\033[0m",      # reset
@@ -128,9 +128,9 @@ def print_color(text, file=sys.stdout):
   file.write('%s' % color(text))
   file.flush()
 
-def print_debug(t):
+def print_debug(t, level=1):
   global _debug
-  if _debug: print_color("#g--> %s\n" % t, file=sys.stderr)
+  if level <= _debug: print_color("#gdebug:#t %s\n" % t, file=sys.stderr)
 
 def print_message(text):
   print_color(" %s\n" % text, file=sys.stdout)
