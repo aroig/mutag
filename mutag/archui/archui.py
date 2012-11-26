@@ -21,7 +21,7 @@ import sys
 import re
 import os
 
-_debug      = False
+_debug      = 0
 _use_color  = True
 
 cc = {"t"  : "\033[0m",      # reset
@@ -51,6 +51,8 @@ fc = {'done'  : '#G',
       }
 
 mc = '#b'
+
+maxwidth = 80
 
 _last_status = ""
 
@@ -105,10 +107,8 @@ def get_terminal_size():
 
 def get_line_width():
   row, col = get_terminal_size()
-  maxcol = 80
-
-  if col and col < maxcol: return col
-  else:   return 80
+  if col: return col
+  else:   return maxwidth
 
 def strip_color(s):
   return re.sub('\033\[[0-9;]+m', '', s)
@@ -128,9 +128,9 @@ def print_color(text, file=sys.stdout):
   file.write('%s' % color(text))
   file.flush()
 
-def print_debug(t):
+def print_debug(t, level=1):
   global _debug
-  if _debug: print_color("%g--> %s\n" % t, file=sys.stderr)
+  if level <= _debug: print_color("#gdebug:#t %s\n" % t, file=sys.stderr)
 
 def print_message(text):
   print_color(" %s\n" % text, file=sys.stdout)
@@ -156,7 +156,8 @@ def print_enum(i, n, text):
 
 # TODO: get rid of nl where I use it
 def print_status(text=None, flag=None, nl=None):
-  width = get_line_width()
+  width = min(get_line_width(), maxwidth)
+
   fwidth = 10
   mwidth = width - fwidth
 
@@ -164,7 +165,7 @@ def print_status(text=None, flag=None, nl=None):
     if re.match("^.*\n\s*$", text, re.MULTILINE): nl = True
     else:                                         nl = False
 
-  text = text.strip()
+  if text: text = text.strip()
 
   global _last_status
   if text == None: text = _last_status
@@ -184,14 +185,25 @@ def print_status(text=None, flag=None, nl=None):
     fmt = '\r%s:: #w{0:<%s}\n' % (mc, width)
     print_color(fmt.format(text), file=sys.stdout)
 
-def print_progress(text, r):
+
+
+def print_progress(text, r, nl=None):
   width = get_line_width()
   ewidth = 9
-  bwidth = int(width/2 - ewidth)
-  mwidth = int(width/2)
+  mwidth = int(0.6*width)
+  bwidth = width - mwidth - ewidth
+
+  if nl == None:
+    if re.match("^.*\n\s*$", text, re.MULTILINE): nl = True
+    else:                                         nl = False
+
+  if text: text = text.strip()
 
   barstr = int(r*bwidth)*'#' + (bwidth-int(r*bwidth))*'='
-  fmt = ' {0:<%s} [{1}] {2:3d}%%' % mwidth
+  fmt = '\r {0:<%s} [{1}] {2:3d}%%' % mwidth
+
+  if nl: fmt = fmt + '\n'
+  else: fmt = fmt + '\r'
 
   sys.stdout.write(fmt.format(text, barstr, int(100*r)))
   sys.stdout.flush()
