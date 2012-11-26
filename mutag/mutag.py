@@ -56,13 +56,6 @@ class Mutag(object):
         subprocess.check_call(cmd_args, stdout=out, stderr=out)
 
 
-  def _import_module(self, path):
-    name = os.path.basename(path).split('.')[0]
-    dirname = os.path.dirname(path)
-    file, pathname, desc = imp.find_module(name, path=[dirname])
-    return imp.load_module(name, file, pathname, desc)
-
-
   def _parse_msgsexp(self, sexpstr):
     data = plistseq.parse(sexpstr)
     L = []
@@ -188,9 +181,17 @@ class Mutag(object):
 
   def autotag(self, msglist, dryrun=False):
     try:
-      rules = self._import_module(self.tagrules_path)
-    except ImportError:
-      ui.print_error("Can't find tagrules path %s" % self.tagrules_path)
+      fd = open(self.tagrules_path, 'r')
+      rawcode = fd.read()
+    except:
+      ui.print_error("Can't open tagrules at %s" % self.tagrules_path)
+      return
+
+    try:
+      rules = imp.new_module('tagrules')
+      exec(rawcode, rules.__dict__)
+    except Exception as err:
+      ui.print_error("Exception loading tagrules %s\n%s" % (self.tagrules_path, str(err)))
       return
 
     try:
@@ -202,6 +203,7 @@ class Mutag(object):
     for msg in msglist:
       tags = msg.get_tags()
       newtags = tr.get_tags(msg)
+      ui.print_debug("%s -> %s" % (', '.join(tags), ', '.join(newtags)))
       if tags != newtags:
         self.print_tagschange(msg, tags, newtags)
         if not dryrun: msg.set_tags(newtags)
