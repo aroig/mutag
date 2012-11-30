@@ -46,7 +46,9 @@ class Message(dict):
         author = '%s <%s>' % (self['from'][0]['name'], self['from'][0]['email'])
       else:
         author = ' <none> '
-      return '#M{0} #C{1} #G{2}\n'.format(str(self['date']), author, str(self['subject']))
+      tagstr = '#W, '.join(['#Y%s' % t for t in self.get_tags()])
+      datestr = self['date'].strftime('%Y-%m-%d %H:%M')
+      return '#M{0} #C{1} #G{2} #W[{3}#W]\n'.format(datestr, author, str(self['subject']), tagstr)
     elif fmt == 'raw':
       return str(self)
 
