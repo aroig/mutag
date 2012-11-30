@@ -22,7 +22,8 @@ import re
 import sys
 
 from datetime import datetime
-from email.parser import Parser
+from email.parser import BytesParser
+from email.generator import BytesGenerator
 from email.header import decode_header
 import email.utils
 
@@ -51,7 +52,7 @@ class Message(dict):
 
 
   def raw(self):
-    with open(self['path'], 'r') as fd:
+    with open(self['path'], 'r', errors='ignore') as fd:
       return fd.read()
 
 
@@ -142,13 +143,13 @@ class Message(dict):
 
 
   def load_message(self):
-    with open(self['path'], 'r', errors='ignore') as fd:
-      self.msg = Parser().parse(fd)
+    with open(self['path'], 'rb') as fd:
+      self.msg = BytesParser().parse(fd)
 
 
   def load_headers(self):
-    with open(self['path'], 'r', errors='ignore') as fd:
-      self.headers = Parser().parse(fd, headersonly=True)
+    with open(self['path'], 'rb') as fd:
+      self.headers = BytesParser().parse(fd, headersonly=True)
 
 
   def get_content(self):
@@ -179,27 +180,52 @@ class Message(dict):
     """Changes the value of headername to headervalue if the header exists,
     or adds it if it does not exist"""
 
-    insertionpoint = content.find("\n\n")
-    leader = content[0:insertionpoint]
+    header = headername.encode() + b': ' + headervalue.encode()
+    insertionpoint = content.find(b"\n\n")
 
     if insertionpoint == 0 or insertionpoint == -1:
-      newline = ''
+      newline = b''
       insertionpoint = 0
+      leader = b''
     else:
-      newline = "\n"
+      newline = b'\n'
+      leader = content[0:insertionpoint]
 
-    if re.search('^%s:(.*)$' % headername, leader, flags = re.MULTILINE):
-      leader = re.sub('^%s:(.*)$' % headername, '%s: %s' % (headername, headervalue), leader,
+    if re.search(b'^' + headername + b':(.*)$', leader, flags = re.MULTILINE):
+      leader = re.sub(b'^' + headername + b':(.*)$', header, leader,
                       flags = re.MULTILINE)
     else:
-      leader = leader + newline + "%s: %s" % (headername, headervalue)
+      leader = leader + newline + header
 
     trailer = content[insertionpoint:]
     return leader + trailer
 
 
+  # This code replaces set_tags using python libs. I'm more inclined to do the
+  # pedestrian thing as it is the same thing offlineimap does.
+  def set_tags_new(self, tags):
+    with open(self['path'], 'rb') as fd:
+      msg = BytesParser().parse(fd)
+
+    tags_str = ', '.join(sorted(tags))
+    try:
+      msg.replace_header(self.tagsheader, tags_str)
+    except KeyError:
+      msg.add_header(self.tagsheader, tags_str)
+
+    # save changed file into temp path
+    parent = os.path.dirname(os.path.dirname(self['path']))
+    tmppath = os.path.join(parent, 'tmp', os.path.basename(self['path']))
+    with open(tmppath, 'wb') as fd:
+      tmpout = BytesGenerator(fd)
+      tmpmsg.flatten(msg, linesep='\n')
+
+    # move back to initial position
+    os.rename(tmppath, self['path'])
+
+
   def set_tags(self, tags):
-    with open(self['path'], 'r') as fd:
+    with open(self['path'], 'rb') as fd:
       content = fd.read()
 
     # change tags
@@ -210,7 +236,7 @@ class Message(dict):
     parent = os.path.dirname(os.path.dirname(self['path']))
     tmppath = os.path.join(parent, 'tmp', os.path.basename(self['path']))
 
-    with open(tmppath, 'w') as fd:
+    with open(tmppath, 'wb') as fd:
       fd.write(content)
 
     # move back to initial position
