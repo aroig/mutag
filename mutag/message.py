@@ -180,7 +180,9 @@ class Message(dict):
     """Changes the value of headername to headervalue if the header exists,
     or adds it if it does not exist"""
 
-    header = headername.encode() + b': ' + headervalue.encode()
+    headername = headername.encode()
+    header = headername + b': ' + headervalue.encode()
+
     insertionpoint = content.find(b"\n\n")
 
     if insertionpoint == 0 or insertionpoint == -1:
