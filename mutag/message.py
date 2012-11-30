@@ -201,29 +201,6 @@ class Message(dict):
     return leader + trailer
 
 
-  # This code replaces set_tags using python libs. I'm more inclined to do the
-  # pedestrian thing as it is the same thing offlineimap does.
-  def set_tags_new(self, tags):
-    with open(self['path'], 'rb') as fd:
-      msg = BytesParser().parse(fd)
-
-    tags_str = ', '.join(sorted(tags))
-    try:
-      msg.replace_header(self.tagsheader, tags_str)
-    except KeyError:
-      msg.add_header(self.tagsheader, tags_str)
-
-    # save changed file into temp path
-    parent = os.path.dirname(os.path.dirname(self['path']))
-    tmppath = os.path.join(parent, 'tmp', os.path.basename(self['path']))
-    with open(tmppath, 'wb') as fd:
-      tmpout = BytesGenerator(fd)
-      tmpmsg.flatten(msg, linesep='\n')
-
-    # move back to initial position
-    os.rename(tmppath, self['path'])
-
-
   def set_tags(self, tags):
     with open(self['path'], 'rb') as fd:
       content = fd.read()
