@@ -58,10 +58,10 @@ class Message(dict):
 
   def _fill_derived_fields(self):
     msg = self
-    for k in ['from', 'to']:
+    for k in ['from', 'to', 'cc']:
       msg[k+'str'] = ', '.join(['%s <%s>' % (x['name'], x['email']) for x in self[k]])
 
-    msg['emails'] = set([ad['email'] for ad in msg['to']]).union([ad['email'] for ad in msg['from']])
+    msg['emails'] = set([ad['email'] for ad in msg['to']]) | set([ad['email'] for ad in msg['from']]) | set([ad['email'] for ad in msg['cc']])
 
 
   def get_header(self, header):
@@ -89,7 +89,7 @@ class Message(dict):
       if k in d: msg[k] = d[k]
       else:      msg[k] = ""
 
-    for k in ['from', 'to']:
+    for k in ['from', 'to', 'cc']:
       if k in d: msg[k] = [{'name': x[0], 'email':x[1]} for x in d[k]]
       else:      msg[k] = []
 
@@ -133,6 +133,7 @@ class Message(dict):
 
     msg['to'] = [{'name': x[0], 'email': x[1]} for x in email.utils.getaddresses([self.get_header('to')])]
     msg['from'] = [{'name': x[0], 'email': x[1]} for x in email.utils.getaddresses([self.get_header('from')])]
+    msg['cc'] = [{'name': x[0], 'email': x[1]} for x in email.utils.getaddresses([self.get_header('cc')])]
 
     if self.tagsheader in self.headers:
       msg['tags'] = set([t.strip() for t in self.headers[self.tagsheader].split(',') if len(t.strip()) > 0])
