@@ -238,7 +238,7 @@ class Mutag(object):
       if modified_only: mtime = self.get_last_mtime()
       else:             mtime = None
 
-      L = self.query_mu(query)
+      L = self.query_mu(query, mtime)
 
       # Fills in thread related data
       self.collect_thread_data(L)
