@@ -71,7 +71,10 @@ class Message(dict):
     for k in ['from', 'to', 'cc']:
       msg[k+'str'] = ', '.join(['%s <%s>' % (x['name'], x['email']) for x in self[k]])
 
-    msg['emails'] = set([ad['email'] for ad in msg['to']]) | set([ad['email'] for ad in msg['from']]) | set([ad['email'] for ad in msg['cc']])
+    msg['emails'] = set([ad['email'] for ad in msg['to']]) | \
+                    set([ad['email'] for ad in msg['from']]) | \
+                    set([ad['email'] for ad in msg['cc']])
+
 
 
   def get_header(self, header):

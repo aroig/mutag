@@ -43,6 +43,10 @@ class Mutag(object):
     self.lastmtime_path = prof['lastmtime']
 
 
+
+  # Auxiliar functions
+  # ----------------------------------------------
+
   def _mu(self, cmd, args, catchout=False, silent=False):
     mu_cmd = 'mu'
     with open('/dev/null', 'w') as devnull:
@@ -65,6 +69,22 @@ class Mutag(object):
       L.append(msg)
     return L
 
+
+
+  def _print_tagschange(self, msg, oldtags, newtags):
+    alltags = oldtags.union(newtags)
+    L = []
+    for t in sorted(alltags):
+      if t in oldtags and t in newtags:       L.append('#Y%s' % t)
+      elif t in oldtags and not t in newtags: L.append('#R-%s' % t)
+      elif not t in oldtags and t in newtags: L.append('#G+%s' % t)
+    tagch = '#W, '.join(L)
+    ui.print_color('#C{0} #W[{1}#W]\n'.format(msg['subject'], tagch))
+
+
+
+  # Maildir handling
+  # ----------------------------------------------
 
   def get_maildir_files(self):
     files = []
@@ -119,14 +139,26 @@ class Mutag(object):
         L.append(msg)
     return L
 
-  def query_mu(self, query):
 
-    # split the query string
-    qlist = shlex.split(query)
+  # Mu database
+  # ----------------------------------------------
+
+  def query_mu(self, query=None, mtime=None):
+    args = ['--threads', '--format=sexp']
+
+    if mtime:
+      args = args + ['--after=%d' % int(mtime)]
+
+    if query:
+      # split the query string
+      qlist = shlex.split(query)
+      args = args + qlist
+    else:
+      args = args + [""]
 
     # parse sexp
     try:
-      sexpdata = self._mu('find', ['--threads', '--format', 'sexp'] + qlist, silent=True, catchout=True)
+      sexpdata = self._mu('find', args, silent=True, catchout=True)
       L = self._parse_msgsexp(sexpdata)
     except subprocess.CalledProcessError as err:
       if err.returncode == 4:   # No results
@@ -134,56 +166,8 @@ class Mutag(object):
       else:
         raise
 
-    # Fills in 'threademails' and 'threadroot' fields from threading data
-    self.collect_thread_data(L)
-
     return L
 
-
-  def query(self, query=None, path=None, modified_only=False):
-    if path:
-      return self.parsefiles([path])
-    elif modified_only:
-      mtime = self.get_last_mtime()
-      return self.modified(mtime)
-    elif query:
-      return self.query_mu(query)
-    else:
-      return []
-
-
-  def count(self, query, modified_only=False):
-    return len(self.query(query, modified_only))
-
-
-  def print_tagschange(self, msg, oldtags, newtags):
-    alltags = oldtags.union(newtags)
-    L = []
-    for t in sorted(alltags):
-      if t in oldtags and t in newtags:       L.append('#Y%s' % t)
-      elif t in oldtags and not t in newtags: L.append('#R-%s' % t)
-      elif not t in oldtags and t in newtags: L.append('#G+%s' % t)
-    tagch = '#W, '.join(L)
-    ui.print_color('#C{0} #W[{1}#W]\n'.format(msg['subject'], tagch))
-
-
-  def change_tags(self, msglist, tagactions, dryrun=False):
-    addtags = set()
-    deltags = set()
-    for ta in tagactions:
-      mdel = re.search('^\s*-(.*)\s*$', ta)
-      madd = re.search('^\s*\+(.*)\s*$', ta)
-
-      if mdel:   deltags.add(mdel.group(1))
-      elif madd: addtags.add(madd.group(1))
-      else:      addtags.add(ta.strip())
-
-    for msg in msglist:
-      tags = msg.get_tags()
-      newtags = tags.union(addtags).difference(deltags)
-      if tags != newtags:
-        self.print_tagschange(msg, tags, newtags)
-        if not dryrun: msg.set_tags(newtags)
 
 
   def collect_thread_data(self, msglist):
@@ -241,6 +225,52 @@ class Mutag(object):
 
 
 
+
+
+  # Interface
+  # ----------------------------------------------
+
+  def query(self, query=None, path=None, modified_only=False):
+
+    if path:
+      L = self.parsefiles([path])
+    else:
+      if modified_only: mtime = self.get_last_mtime()
+      else:             mtime = None
+
+      L = self.query_mu(query)
+
+      # Fills in thread related data
+      self.collect_thread_data(L)
+    return L
+
+
+
+  def count(self, query, modified_only=False):
+    return len(self.query(query, modified_only))
+
+
+
+  def change_tags(self, msglist, tagactions, dryrun=False):
+    addtags = set()
+    deltags = set()
+    for ta in tagactions:
+      mdel = re.search('^\s*-(.*)\s*$', ta)
+      madd = re.search('^\s*\+(.*)\s*$', ta)
+
+      if mdel:   deltags.add(mdel.group(1))
+      elif madd: addtags.add(madd.group(1))
+      else:      addtags.add(ta.strip())
+
+    for msg in msglist:
+      tags = msg.get_tags()
+      newtags = tags.union(addtags).difference(deltags)
+      if tags != newtags:
+        self._print_tagschange(msg, tags, newtags)
+        if not dryrun: msg.set_tags(newtags)
+
+
+
   def autotag(self, msglist, dryrun=False):
     try:
       fd = open(self.tagrules_path, 'r')
@@ -262,12 +292,14 @@ class Mutag(object):
       newtags = tr.get_tags(msg)
       ui.print_debug("%s -> %s" % (', '.join(tags), ', '.join(newtags)))
       if tags != newtags:
-        self.print_tagschange(msg, tags, newtags)
+        self._print_tagschange(msg, tags, newtags)
         if not dryrun: msg.set_tags(newtags)
+
 
 
   def index(self, dryrun=False):
     if not dryrun: self._mu('index', ['--maildir', self.maildir, '--autoupgrade'], catchout=False)
+
 
 
   def update_mtime(self, dryrun=False):
