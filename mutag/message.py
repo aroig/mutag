@@ -20,6 +20,7 @@
 import os
 import re
 import sys
+import pprint
 
 from datetime import datetime
 from email.parser import BytesParser
@@ -33,6 +34,12 @@ charset.add_charset('utf-8', charset.QP, charset.QP)
 
 
 class Message(dict):
+  _tags_sep = {'default'   : ', ',
+              'X-Keywords': ', ',
+              'X-Label'   : ' ',
+              'Keywords'  : ' '}
+
+
   def __init__(self):
     super().__init__()
     self.msg = None
@@ -49,8 +56,9 @@ class Message(dict):
       tagstr = '#W, '.join(['#Y%s' % t for t in self.get_tags()])
       datestr = self['date'].strftime('%Y-%m-%d %H:%M')
       return '#M{0} #C{1} #G{2} #W[{3}#W]\n'.format(datestr, author, str(self['subject']), tagstr)
+
     elif fmt == 'raw':
-      return str(self)
+      return pprint.pformat(self, indent=2) + '\n\n'
 
 
   def raw(self):
@@ -72,9 +80,16 @@ class Message(dict):
       raw = self.headers.get(header, "")
       ret = ""
       for txt, enc in decode_header(raw):
-        if enc:                ret = ret + str(txt, enc)
-        elif type(txt) != str: ret = ret + str(txt, 'utf-8')
-        else:                  ret = ret + txt
+        if enc == 'unknown':
+          ret = ret + str(txt, 'ascii', errors='ignore')
+        elif enc == 'unknown-8bit':
+          ret = ret + str(txt, 'utf-8', errors='ignore')
+        elif enc:
+          ret = ret + str(txt, enc, errors='ignore')
+        elif type(txt) != str:
+          ret = ret + str(txt, 'utf-8', errors='ignore')
+        else:
+          ret = ret + txt
       return ret
     else:
       return ""
@@ -102,6 +117,9 @@ class Message(dict):
     msg['size'] = int(d['size'])
     if 'date' in d: msg['date'] = datetime.fromtimestamp(int(d['date'][0])*0xFFFF + int(d['date'][1]))
     else:           msg['date'] = None
+
+    if 'thread' in d:
+      msg['thread'] = tuple(d['thread']['path'].split(':'))
 
     self._fill_derived_fields()
 
@@ -173,7 +191,8 @@ class Message(dict):
       msg = self.headers
 
     if self.tagsheader.lower() in msg:
-      tags = set([t.strip() for t in msg[self.tagsheader.lower()].split(',') if len(t.strip()) > 0])
+      sep = self._tags_sep.get(self.tagsheader, self._tags_sep['default'])
+      tags = set([t.strip() for t in msg[self.tagsheader.lower()].split(sep.strip()) if len(t.strip()) > 0])
     else:
       tags = set()
     return tags
@@ -211,7 +230,8 @@ class Message(dict):
       content = fd.read()
 
     # change tags
-    tags_str = ', '.join(sorted(tags))
+    sep = self._tags_sep.get(self.tagsheader, self._tags_sep['default'])
+    tags_str = sep.join(sorted(tags))
     content = self.message_addheader(content, self.tagsheader, tags_str)
 
     # save changed file into temp path

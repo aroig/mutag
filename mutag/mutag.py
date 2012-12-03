@@ -120,16 +120,23 @@ class Mutag(object):
     return L
 
   def query_mu(self, query):
+
     # split the query string
     qlist = shlex.split(query)
+
+    # parse sexp
     try:
-      sexpdata = self._mu('find', ['--format', 'sexp'] + qlist, silent=True, catchout=True)
+      sexpdata = self._mu('find', ['--threads', '--format', 'sexp'] + qlist, silent=True, catchout=True)
       L = self._parse_msgsexp(sexpdata)
     except subprocess.CalledProcessError as err:
       if err.returncode == 4:   # No results
         L = []
       else:
         raise
+
+    # Fills in 'threademails' and 'threadroot' fields from threading data
+    self.collect_thread_data(L)
+
     return L
 
 
@@ -179,6 +186,61 @@ class Mutag(object):
         if not dryrun: msg.set_tags(newtags)
 
 
+  def collect_thread_data(self, msglist):
+    class Node (dict):
+      value = None     # message at the node
+      root  = None     # oldest ancestor with value != None
+      data  = None     # collected thata for the children
+      child = None     # dict of children
+
+    threads = Node()
+
+    # populate a tree rooted on threads node
+    for msg in msglist:
+      if 'thread' in msg:
+        pth = threads
+        for k in msg['thread']:
+          if not pth.child:
+            pth.child = {}
+          if not k in pth.child:
+            pth.child[k] = Node()
+          pth = pth.child[k]
+
+        pth.value = msg
+
+    # Recursively collect data
+    def _collect_thread_data_rec(node, root):
+
+      if root == None and node.value != None:
+        root = node
+
+      node.root = root
+      node.data = {'emails': set()}
+
+      if node.value:
+        node.data['emails'].update(node.value['emails'])
+
+      if node.child:
+        for child in node.child.values():
+          _collect_thread_data_rec(child, root)
+          node.data['emails'].update(child.data['emails'])
+
+
+    # Recursively update msg objects
+    def _collect_thread_update_msg_rec(node):
+      if node.root != None and node.value != None:
+        node.value['threademails'] = node.root.data['emails']
+        node.value['threadroot']   = node.root.value['message-id']
+
+      if node.child:
+        for child in node.child.values():
+          _collect_thread_update_msg_rec(child)
+
+    _collect_thread_data_rec(threads, None)
+    _collect_thread_update_msg_rec(threads)
+
+
+
   def autotag(self, msglist, dryrun=False):
     try:
       fd = open(self.tagrules_path, 'r')
@@ -190,14 +252,9 @@ class Mutag(object):
     try:
       rules = imp.new_module('tagrules')
       exec(rawcode, rules.__dict__)
+      tr = rules.TagRules()
     except Exception as err:
       ui.print_error("Exception loading tagrules %s\n%s" % (self.tagrules_path, str(err)))
-      return
-
-    try:
-      tr = rules.TagRules()
-    except AttributeError:
-      ui.print_error("Can't find class TagRules in %s.py" % tagrules)
       return
 
     for msg in msglist:
