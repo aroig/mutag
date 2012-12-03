@@ -287,14 +287,17 @@ class Mutag(object):
       ui.print_error("Exception loading tagrules %s\n%s" % (self.tagrules_path, str(err)))
       return
 
+    tagged_count = 0
     for msg in msglist:
       tags = msg.get_tags()
       newtags = tr.get_tags(msg)
       ui.print_debug("%s -> %s" % (', '.join(tags), ', '.join(newtags)))
       if tags != newtags:
+        tagged_count = tagged_count + 1
         self._print_tagschange(msg, tags, newtags)
         if not dryrun: msg.set_tags(newtags)
 
+    print("Processed %d files, and retagged %d." % (len(msglist), tagged_count))
 
 
   def index(self, dryrun=False):
