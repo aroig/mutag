@@ -36,7 +36,9 @@ alist    = Group(LPAR + ZeroOrMore(aitem) + RPAR).setParseAction(lambda t: t.asL
 slist    = Group(LPAR + ZeroOrMore(elem) + RPAR).setParseAction(lambda t: t.asList())
 
 pkey     = DDOT + token
-pvalue   = alist | slist | elem
+elplist  = Group(LPAR + ZeroOrMore(Group(pkey + elem)) + RPAR).setParseAction(lambda t: {k: v for k, v in t[0]})
+
+pvalue   = alist | slist | elplist | elem
 plist    = Group(LPAR + ZeroOrMore(Group(pkey + pvalue)) + RPAR).setParseAction(lambda t: {k: v for k, v in t[0]})
 plistseq = ZeroOrMore(plist)
 
