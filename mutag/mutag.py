@@ -86,11 +86,15 @@ class Mutag(object):
   # Maildir handling
   # ----------------------------------------------
 
+  def should_ignore_path(self, path):
+    return any([os.path.exists(os.path.join(path, ".noindex")),
+               os.path.exists(os.path.join(path, ".notag"))])
+
   def get_maildir_files(self):
     files = []
     for fd in os.listdir(self.maildir):
       path = os.path.join(self.maildir, fd)
-      if os.path.isdir(path) and not os.path.exists(os.path.join(path, ".noindex")):
+      if os.path.isdir(path) and not self.should_ignore_path(path):
         for mp in glob.glob(os.path.join(path, '*/*')):
           if os.path.isfile(mp):
             files.append(mp)
@@ -289,6 +293,9 @@ class Mutag(object):
 
     tagged_count = 0
     for msg in msglist:
+      if self.should_ignore_path(os.path.join(self.maildir, re.sub('^/', '', msg['maildir']))):
+        continue
+
       tags = msg.get_tags()
       newtags = tr.get_tags(msg)
       ui.print_debug("%s -> %s" % (', '.join(tags), ', '.join(newtags)))
