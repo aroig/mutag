@@ -62,6 +62,7 @@ def eval_command(opts, args):
   mutag = Mutag(prof = prof)
 
   if opts.cmd == 'autotag':
+    ui.print_color("autotaging new messages under #B%s#t\n" % mutag.maildir)
     L = mutag.query(opts.query, path = opts.path, modified_only=opts.modified)
     mutag.autotag(L, dryrun=opts.dryrun)
     if opts.index and len(L) > 0: mutag.index(dryrun=opts.dryrun)

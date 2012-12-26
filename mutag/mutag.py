@@ -304,7 +304,7 @@ class Mutag(object):
         self._print_tagschange(msg, tags, newtags)
         if not dryrun: msg.set_tags(newtags)
 
-    print("Processed %d files, and retagged %d." % (len(msglist), tagged_count))
+    ui.print_color("Processed #G%d#t files, and retagged #G%d#t.\n" % (len(msglist), tagged_count))
 
 
   def index(self, dryrun=False):
