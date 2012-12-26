@@ -148,7 +148,7 @@ class Mutag(object):
   # ----------------------------------------------
 
   def query_mu(self, query=None, mtime=None):
-    args = ['--threads', '--format=sexp']
+    args = ['--threads', '--include-related', '--format=sexp']
 
     if mtime:
       args = args + ['--after=%d' % int(mtime)]
