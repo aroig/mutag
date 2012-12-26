@@ -20,27 +20,30 @@
 import sys
 import re
 import os
+from collections import OrderedDict
+import curses
 
-_debug      = 0
-_use_color  = True
+curses.setupterm()
 
-cc = {"t"  : "\033[0m",      # reset
-      "r"  : "\033[1;31m",   # red
-      "g"  : "\033[1;32m",   # green
-      "y"  : "\033[1;33m",   # yellow
-      "b"  : "\033[1;34m",   # blue
-      "m"  : "\033[1;35m",   # magenta
-      "c"  : "\033[1;36m",   # cyan
-      "w"  : "\033[1;37m",   # white
+_numcolors = curses.tigetnum('colors')
+_setfg = curses.tigetstr('setaf')
+_setbg = curses.tigetstr('setab')
+_bold  = curses.tigetstr('bold')
+_cc = OrderedDict()
 
-      "R"  : "\033[0;31m",   # dark red
-      "G"  : "\033[0;32m",   # dark green
-      "Y"  : "\033[0;33m",   # dark yellow
-      "B"  : "\033[0;34m",   # dark blue
-      "M"  : "\033[0;35m",   # dark magenta
-      "C"  : "\033[0;36m",   # dark cyan
-      "W"  : "\033[0;37m"    # dark white
-      }
+if _numcolors >= 16:
+  for i, k in enumerate("krgybmcw"):
+    _cc[k.upper()] = str(curses.tparm(_setfg, i), encoding='ascii')          # dark
+    _cc[k]         = str(curses.tparm(_setfg, i + 8), encoding='ascii')      # light
+    _cc['*'+k]     = str(_bold + curses.tparm(_setfg, i), encoding='ascii')  # bold
+else:
+  for i, k in enumerate("krgybmcw"):
+    _cc[k.upper()] = str(curses.tparm(_setfg, i), encoding='ascii')          # dark
+    _cc[k]         = str(_bold + curses.tparm(_setfg, i), encoding='ascii')  # bold
+    _cc['*'+k]     = str(_bold + curses.tparm(_setfg, i), encoding='ascii')  # bold
+
+_cc['t'] = "\033[0m"
+_cc['#'] = "#"
 
 
 fc = {'done'  : '#G',
@@ -50,9 +53,12 @@ fc = {'done'  : '#G',
       'stop'  : '#G'
       }
 
-mc = '#b'
+mc = '#*b'
 
 maxwidth = 80
+
+_debug      = 0
+_use_color  = True
 
 _last_status = ""
 
@@ -68,7 +74,6 @@ def use_color(cl):
 def set_main_color(c):
   global mc
   mc = c
-
 
 
 def get_terminal_size():
@@ -117,10 +122,9 @@ def color(s):
   global _use_color
   ret = s + '#t'
   if _use_color:
-    for k in cc: ret = ret.replace('#'+k, cc[k])
+    for k in _cc: ret = ret.replace('#'+k, _cc[k])
   else:
-    for k in cc: ret = ret.replace('#'+k, '')
-  ret = ret.replace('##', '#')
+    for k in _cc: ret = ret.replace('#'+k, '')
   return ret
 
 
@@ -130,16 +134,16 @@ def print_color(text, file=sys.stdout):
 
 def print_debug(t, level=1):
   global _debug
-  if level <= _debug: print_color("#gdebug:#t %s\n" % t, file=sys.stderr)
+  if level <= _debug: print_color("#*gdebug:#t %s\n" % t, file=sys.stderr)
 
 def print_message(text):
   print_color(" %s\n" % text, file=sys.stdout)
 
 def print_error(text):
-  print_color('#rerror: #w%s\n' % text, file=sys.stderr)
+  print_color('#*rerror: #w%s\n' % text, file=sys.stderr)
 
 def print_warning(text):
-  print_color('#ywarning: #w%s\n' % text, file=sys.stderr)
+  print_color('#*ywarning: #w%s\n' % text, file=sys.stderr)
 
 
 
