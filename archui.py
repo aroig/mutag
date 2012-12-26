@@ -21,26 +21,40 @@ import sys
 import re
 import os
 from collections import OrderedDict
-import curses
 
-curses.setupterm()
-
-_numcolors = curses.tigetnum('colors')
-_setfg = curses.tigetstr('setaf')
-_setbg = curses.tigetstr('setab')
-_bold  = curses.tigetstr('bold')
 _cc = OrderedDict()
+
+try:
+  import curses
+  curses.setupterm()
+
+  _numcolors = curses.tigetnum('colors')
+  _setfg = curses.tigetstr('setaf')
+  _setbg = curses.tigetstr('setab')
+  _bold  = curses.tigetstr('bold')
+
+except:
+  _numcolors = 2
+
 
 if _numcolors >= 16:
   for i, k in enumerate("krgybmcw"):
     _cc[k.upper()] = str(curses.tparm(_setfg, i), encoding='ascii')          # dark
     _cc[k]         = str(curses.tparm(_setfg, i + 8), encoding='ascii')      # light
     _cc['*'+k]     = str(_bold + curses.tparm(_setfg, i), encoding='ascii')  # bold
-else:
+
+elif _numcolors >= 8:
   for i, k in enumerate("krgybmcw"):
     _cc[k.upper()] = str(curses.tparm(_setfg, i), encoding='ascii')          # dark
     _cc[k]         = str(_bold + curses.tparm(_setfg, i), encoding='ascii')  # bold
     _cc['*'+k]     = str(_bold + curses.tparm(_setfg, i), encoding='ascii')  # bold
+
+else:
+  for i, k in enumerate("krgybmcw"):
+    _cc[k.upper()] = ""
+    _cc[k]         = ""
+    _cc['*'+k]     = ""
+
 
 _cc['t'] = "\033[0m"
 _cc['#'] = "#"
