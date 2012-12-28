@@ -63,7 +63,8 @@ def eval_command(opts, args):
 
   if opts.cmd == 'autotag':
     ui.print_color("autotaging new messages under #B%s#t\n" % mutag.maildir)
-    L = mutag.query(opts.query, path = opts.path, modified_only=opts.modified)
+    L = mutag.query(opts.query, path = opts.path,
+                    modified_only=opts.modified, related=True)
     mutag.autotag(L, dryrun=opts.dryrun)
     if opts.index and len(L) > 0: mutag.index(dryrun=opts.dryrun)
 
@@ -77,17 +78,20 @@ def eval_command(opts, args):
     sys.exit()
 
   elif opts.cmd == 'tag':
-    L = mutag.query(opts.query, path = opts.path, modified_only=opts.modified)
+    L = mutag.query(opts.query, path = opts.path,
+                    modified_only=opts.modified, related=False)
     mutag.change_tags(L, args, dryrun=opts.dryrun)
     if opts.index and len(L) > 0: mutag.index(dryrun=opts.dryrun)
 
   elif opts.cmd == 'list':
-    L = mutag.query(opts.query, path = opts.path, modified_only=opts.modified)
+    L = mutag.query(opts.query, path = opts.path,
+                    modified_only=opts.modified, related=False)
     for msg in L:
       ui.print_color(msg.tostring(fmt=opts.format))
 
   elif opts.cmd == 'print':
-    L = mutag.query(opts.query, path = opts.path, modified_only=opts.modified)
+    L = mutag.query(opts.query, path = opts.path,
+                    modified_only=opts.modified, related=False)
     for msg in L:
       print(msg.raw())
 

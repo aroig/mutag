@@ -147,18 +147,13 @@ class Mutag(object):
   # Mu database
   # ----------------------------------------------
 
-  def query_mu(self, query=None, mtime=None):
-    args = ['--threads', '--include-related', '--format=sexp']
+  def query_mu(self, query=None, mtime=None, related=False):
+    args = ['--threads', '--format=sexp']
 
-    if mtime:
-      args = args + ['--after=%d' % int(mtime)]
-
-    if query:
-      # split the query string
-      qlist = shlex.split(query)
-      args = args + qlist
-    else:
-      args = args + [""]
+    if related: args.append('--include-related')
+    if mtime:   args.append('--after=%d' % int(mtime))
+    if query:   args.extend(shlex.split(query))
+    else:       args.append("")
 
     # parse sexp
     try:
@@ -234,7 +229,7 @@ class Mutag(object):
   # Interface
   # ----------------------------------------------
 
-  def query(self, query=None, path=None, modified_only=False):
+  def query(self, query=None, path=None, modified_only=False, related=False):
 
     if path:
       L = self.parsefiles([path])
@@ -242,7 +237,7 @@ class Mutag(object):
       if modified_only: mtime = self.get_last_mtime()
       else:             mtime = None
 
-      L = self.query_mu(query, mtime)
+      L = self.query_mu(query, mtime, related=related)
 
       # Fills in thread related data
       self.collect_thread_data(L)
@@ -251,7 +246,10 @@ class Mutag(object):
 
 
   def count(self, query, modified_only=False):
-    return len(self.query(query, modified_only))
+    if modified_only: mtime = self.get_last_mtime()
+    else:             mtime = None
+
+    return len(self.query_mu(query, mtime, related=False))
 
 
 
