@@ -52,8 +52,8 @@ man:
 
 install:
 	$(PYTHON) setup.py install --prefix=$(DESTDIR)$(PREFIX)
-	@install -Dm755 completion/zsh/_$(NAME) $(DESTDIR)$(ZSHDIR)/_$(NAME)
-#	@install -Dm755 completion/bash/$(NAME) $(DESTDIR)$(BASHDIR)/$(NAME)
+#	@install -Dm644 completion/zsh/_$(NAME) $(DESTDIR)$(ZSHDIR)/_$(NAME)
+#	@install -Dm644 completion/bash/$(NAME) $(DESTDIR)$(BASHDIR)/$(NAME)
 	@install -Dm644 man/$(NAME).1 $(DESTDIR)$(MANDIR)/$(NAME).1
 	@install -Dm644 README $(DESTDIR)$(DOCDIR)/README
 #	@cp -R docs/* $(DESTDIR)$(DOCDIR)
