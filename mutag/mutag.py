@@ -300,7 +300,7 @@ class Mutag(object):
       else:      addtags.add(ta.strip())
 
     for msg in msglist:
-      tags = msg.get_tags()
+      tags = set(msg['tags'])
       newtags = tags.union(addtags).difference(deltags)
       if tags != newtags:
         self._print_tagschange(msg, tags, newtags)
@@ -317,7 +317,7 @@ class Mutag(object):
       if self.should_ignore_path(os.path.join(self.maildir, re.sub('^/', '', msg['maildir']))):
         continue
 
-      tags = msg.get_tags()
+      tags = set(msg['tags'])
       newtags = tr.get_tags(msg)
       ui.print_debug("%s -> %s" % (', '.join(tags), ', '.join(newtags)))
       if tags != newtags:
@@ -342,7 +342,6 @@ class Mutag(object):
 #        ui.print_color(msg.tostring('compact'))
         expired_count = expired_count + 1
         if not dryrun: self.mark_as_trash(msg)
-
 
     ui.print_color("Processed #G%d#t files, and expired #G%d#t.\n" % (len(msglist), expired_count))
 

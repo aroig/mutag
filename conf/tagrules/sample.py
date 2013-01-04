@@ -74,7 +74,7 @@ class TagRules(object):
   # and returns a set of tags that will replace the current msg tags.
 
   def get_tags(self, msg):
-    tags = msg.get_tags()
+    tags = set(msg['tags'])
     for rname, rfunc in self.rules:
       rfunc(msg, tags)
     return tags

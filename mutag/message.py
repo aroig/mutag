@@ -53,7 +53,7 @@ class Message(dict):
         author = '%s <%s>' % (self['from'][0]['name'], self['from'][0]['email'])
       else:
         author = ' <none> '
-      tagstr = '#W, '.join(sorted(['#Y%s' % t for t in self.get_tags()]))
+      tagstr = '#W, '.join(sorted(['#Y%s' % t for t in self['tags']]))
       datestr = self['date'].strftime('%Y-%m-%d %H:%M')
       return '#M{0} #C{1} #G{2} #W[{3}#W]\n'.format(datestr, author, str(self['subject']), tagstr)
 
@@ -110,7 +110,7 @@ class Message(dict):
       else:      msg[k] = ""
 
     for k in ['from', 'to', 'cc']:
-      if k in d: msg[k] = [{'name': x[0], 'email':x[1]} for x in d[k]]
+      if k in d: msg[k] = [{'name': x[0], 'email':x[1].lower()} for x in d[k]]
       else:      msg[k] = []
 
     for k in ['flags', 'tags']:
@@ -154,9 +154,14 @@ class Message(dict):
     else:
       msg['date'] = None
 
-    msg['to'] = [{'name': x[0], 'email': x[1]} for x in email.utils.getaddresses([self.get_header('to')])]
-    msg['from'] = [{'name': x[0], 'email': x[1]} for x in email.utils.getaddresses([self.get_header('from')])]
-    msg['cc'] = [{'name': x[0], 'email': x[1]} for x in email.utils.getaddresses([self.get_header('cc')])]
+    msg['to'] = [{'name': x[0], 'email': x[1].lower()}
+                 for x in email.utils.getaddresses([self.get_header('to')])]
+
+    msg['from'] = [{'name': x[0], 'email': x[1].lower()}
+                   for x in email.utils.getaddresses([self.get_header('from')])]
+
+    msg['cc'] = [{'name': x[0], 'email': x[1].lower()}
+                 for x in email.utils.getaddresses([self.get_header('cc')])]
 
     if self.tagsheader in self.headers:
       msg['tags'] = set([t.strip() for t in self.headers[self.tagsheader].split(',') if len(t.strip()) > 0])
@@ -183,22 +188,6 @@ class Message(dict):
     payload = self.msg.get_payload(decode=True)
     return payload
 
-
-  def get_tags(self):
-    if self.msg != None:
-      msg = self.msg
-    elif self.headers != None:
-      msg = self.headers
-    else:
-      self.load_headers()
-      msg = self.headers
-
-    if self.tagsheader.lower() in msg:
-      sep = self._tags_sep.get(self.tagsheader, self._tags_sep['default'])
-      tags = set([t.strip() for t in msg[self.tagsheader.lower()].split(sep.strip()) if len(t.strip()) > 0])
-    else:
-      tags = set()
-    return tags
 
 
   def message_addheader(self, content, headername, headervalue):
