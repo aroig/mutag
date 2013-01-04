@@ -39,6 +39,10 @@ def get_profile(conf, opts):
   prof = {}
   prof['muhome'] = os.path.expanduser(conf.get('profile %s' % name, 'muhome'))
   prof['maildir'] = os.path.expanduser(conf.get('profile %s' % name, 'maildir'))
+
+  prof['trash'] = conf.get('profile %s' % name, 'trash')
+  prof['expiredays'] = int(conf.get('profile %s' % name, 'expiredays'))
+
   prof['lastmtime'] = os.path.expanduser(conf.get('profile %s' % name, 'lastmtime'))
   prof['tagrules'] = os.path.expanduser(conf.get('profile %s' % name, 'tagrules'))
 
@@ -66,7 +70,13 @@ def eval_command(opts, args):
     L = mutag.query(opts.query, path = opts.path,
                     modified_only=opts.modified, related=True)
     mutag.autotag(L, dryrun=opts.dryrun)
-    if opts.index and len(L) > 0: mutag.index(dryrun=opts.dryrun)
+
+  if opts.cmd == 'expire':
+    ui.print_color("expiring old messages under #B%s#t\n" % mutag.maildir)
+    mutag.expire(dryrun=opts.dryrun)
+
+  if opts.cmd in set(['autotag', 'expire']) and opts.index:
+    mutag.index(dryrun=opts.dryrun)
 
   elif opts.cmd == 'count':
     num = mutag.count(opts.query, modified_only=opts.modified)
@@ -119,6 +129,9 @@ parser.add_option("-C", "--count", action="store_const", const="count", default=
 
 parser.add_option("-A", "--autotag", action="store_const", const="autotag", default=None, dest="cmd",
                   help="Tag rule to apply")
+
+parser.add_option("-E", "--expire", action="store_const", const="expire", default=None, dest="cmd",
+                  help="Expire old messages")
 
 parser.add_option("-D", "--dedup", action="store_const", const="dedup", default=None, dest="cmd",
                   help="Remove duplicate message with same uid content on same folder")

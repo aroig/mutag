@@ -24,7 +24,9 @@ import sys
 import imp
 import glob
 import shlex
+import shutil
 import subprocess
+import datetime
 
 import mutag.plistseq as plistseq
 from mutag.message import Message
@@ -39,6 +41,10 @@ class Mutag(object):
   def __init__(self, prof):
     self.muhome = prof['muhome']
     self.maildir = prof['maildir']
+
+    self.trash_path = os.path.join(self.maildir, prof['trash'])
+    self.expire_days = prof['expiredays']
+
     self.tagrules_path = prof['tagrules']
     self.lastmtime_path = prof['lastmtime']
 
@@ -70,7 +76,6 @@ class Mutag(object):
     return L
 
 
-
   def _print_tagschange(self, msg, oldtags, newtags):
     alltags = oldtags.union(newtags)
     L = []
@@ -80,6 +85,23 @@ class Mutag(object):
       elif not t in oldtags and t in newtags: L.append('#G+%s' % t)
     tagch = '#W, '.join(L)
     ui.print_color('#C{0} #W[{1}#W]\n'.format(msg['subject'], tagch))
+
+
+  def _load_tagrules(self):
+    try:
+      fd = open(self.tagrules_path, 'r')
+      rawcode = fd.read()
+    except:
+      ui.print_error("Can't open tagrules at %s" % self.tagrules_path)
+      return
+
+    try:
+      rules = imp.new_module('tagrules')
+      exec(rawcode, rules.__dict__)
+      return rules.TagRules()
+    except Exception as err:
+      ui.print_error("Exception loading tagrules %s\n%s" % (self.tagrules_path, str(err)))
+      return
 
 
 
@@ -142,6 +164,19 @@ class Mutag(object):
         msg.from_file(mp, maildir=self.maildir)
         L.append(msg)
     return L
+
+
+  def move_to_maildir(self, msg, tgt):
+    path = msg['path']
+    if path and os.path.exists(path):
+      shutil.move(path, os.path.join(tgt, 'cur'))
+
+
+  def mark_as_trash(self, msg):
+    # set tags to ['\\Trash']. gmail will move it to trash when syncing.
+    msg.set_tags(['\\Trash'])
+
+
 
 
   # Mu database
@@ -274,20 +309,8 @@ class Mutag(object):
 
 
   def autotag(self, msglist, dryrun=False):
-    try:
-      fd = open(self.tagrules_path, 'r')
-      rawcode = fd.read()
-    except:
-      ui.print_error("Can't open tagrules at %s" % self.tagrules_path)
-      return
 
-    try:
-      rules = imp.new_module('tagrules')
-      exec(rawcode, rules.__dict__)
-      tr = rules.TagRules()
-    except Exception as err:
-      ui.print_error("Exception loading tagrules %s\n%s" % (self.tagrules_path, str(err)))
-      return
+    tr = self._load_tagrules()
 
     tagged_count = 0
     for msg in msglist:
@@ -303,6 +326,26 @@ class Mutag(object):
         if not dryrun: msg.set_tags(newtags)
 
     ui.print_color("Processed #G%d#t files, and retagged #G%d#t.\n" % (len(msglist), tagged_count))
+
+
+
+  def expire(self, dryrun=False):
+    tr = self._load_tagrules()
+    expire_date = datetime.datetime.today() - datetime.timedelta(days=self.expire_days)
+
+    expired_count = 0
+    msglist = self.query(query=tr.expire_query(expire_date), related=True)
+    for msg in msglist:
+      if self.should_ignore_path(os.path.join(self.maildir, re.sub('^/', '', msg['maildir']))):
+        continue
+      if tr.expire(msg, expire_date):
+#        ui.print_color(msg.tostring('compact'))
+        expired_count = expired_count + 1
+        if not dryrun: self.mark_as_trash(msg)
+
+
+    ui.print_color("Processed #G%d#t files, and expired #G%d#t.\n" % (len(msglist), expired_count))
+
 
 
   def index(self, dryrun=False):
