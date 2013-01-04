@@ -345,7 +345,9 @@ class Mutag(object):
       if tr.expire(msg, expire_date):
 #        ui.print_color(msg.tostring('compact'))
         expired_count = expired_count + 1
-        if not dryrun: self.mark_as_trash(msg)
+        if not dryrun:
+          self.move_to_maildir(msg, self.trash_path)
+#          self.mark_as_trash(msg)
 
     ui.print_color("Processed #G%d#t files, and expired #G%d#t.\n" % (len(msglist), expired_count))
 
