@@ -26,7 +26,8 @@ DOT, DDOT = map(Suppress, ".:")
 
 decimal  = Regex(r'-?0|[1-9]\d*').setParseAction(lambda t: int(t[0]))
 token    = Word(alphanums + '-')
-qstring  = dblQuotedString.setParseAction(removeQuotes)
+qstring  = dblQuotedString.setParseAction(
+           lambda t: [s[1:-1].replace('\\\\', '\\').replace('\\"', '"') for s in t])
 string   = token | qstring
 nil      = Literal("nil").setParseAction(lambda t: [None])
 elem     = nil | token | qstring | string
