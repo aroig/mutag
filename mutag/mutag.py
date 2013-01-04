@@ -233,22 +233,26 @@ class Mutag(object):
         root = node
 
       node.root = root
-      node.data = {'emails': set()}
+      node.data = {'emails': set(), 'tags': set()}
 
       if node.value:
         node.data['emails'].update(node.value['emails'])
+        node.data['tags'].update(node.value['tags'])
 
       if node.child:
         for child in node.child.values():
           _collect_thread_data_rec(child, root)
           node.data['emails'].update(child.data['emails'])
+          node.data['tags'].update(child.data['tags'])
+
 
 
     # Recursively update msg objects
     def _collect_thread_update_msg_rec(node):
       if node.root != None and node.value != None:
-        node.value['threademails'] = node.root.data['emails']
-        node.value['threadroot']   = node.root.value['message-id']
+        node.value['thread-emails'] = set(node.root.data['emails'])
+        node.value['thread-tags']   = set(node.root.data['tags'])
+        node.value['thread-root']   = str(node.root.value['message-id'])
 
       if node.child:
         for child in node.child.values():

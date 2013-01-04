@@ -75,6 +75,9 @@ class Message(dict):
                     set([ad['email'] for ad in msg['from']]) | \
                     set([ad['email'] for ad in msg['cc']])
 
+    msg['thread-emails'] = set(msg.get('emails', set([])))
+    msg['thread-root'] = str(msg.get('message-id', ""))
+
 
 
   def get_header(self, header):
@@ -115,7 +118,7 @@ class Message(dict):
 
     for k in ['flags', 'tags']:
       if k in d: msg[k] = set(d[k])
-      else:      msg[k] = None
+      else:      msg[k] = set([])
 
     msg['size'] = int(d['size'])
     if 'date' in d: msg['date'] = datetime.fromtimestamp(int(d['date'][0])*0xFFFF + int(d['date'][1]))
