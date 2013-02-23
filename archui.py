@@ -147,9 +147,9 @@ def color(s):
 
 
 def print_color(text, file=sys.stdout):
-    write(text + '\n', file)
+    write_color(text + '\n', file)
 
-def write(text, file=sys.stdout):
+def write_color(text, file=sys.stdout):
     file.write('%s' % color(text))
     file.flush()
 
