@@ -89,7 +89,6 @@ def set_main_color(c):
     global mc
     mc = c
 
-
 def get_terminal_size():
     env = os.environ
     def ioctl_GWINSZ(fd):
@@ -100,6 +99,7 @@ def get_terminal_size():
         except:
             return None
         return cr
+
     cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
     if not cr:
         try:
@@ -108,12 +108,9 @@ def get_terminal_size():
             os.close(fd)
         except:
             pass
+
     if not cr:
         cr = (None, None)
-#    try:
-#      cr = (env['LINES'], env['COLUMNS'])
-#    except:
-#      cr = (25, 80)
 
     if cr[0]: row = int(cr[0])
     else:     row = None
@@ -123,11 +120,11 @@ def get_terminal_size():
 
     return (row, col)
 
-
 def get_line_width():
     row, col = get_terminal_size()
     if col: return col
     else:   return maxwidth
+
 
 def strip_color(s):
     return re.sub('\033\[[0-9;]+m', '', s)
@@ -213,7 +210,6 @@ def print_status(text=None, flag=None, nl=None):
         write(fmt.format(text), file=sys.stdout)
 
 
-
 def print_progress(text, r, nl=None):
     width = get_line_width()
     ewidth = 9
@@ -236,10 +232,10 @@ def print_progress(text, r, nl=None):
     sys.stdout.flush()
 
 
-
 def ask_question_string(question):
     write('%s ? #w%s ' % (mc, question), file=sys.stderr)
     return input()
+
 
 def ask_question_yesno(question, default=None):
     if default == 'yes':    hint = '[Y/n]'
