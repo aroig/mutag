@@ -229,7 +229,7 @@ def print_progress(text, r, nl=None):
     if nl: fmt = fmt + '\n'
     else: fmt = fmt + '\r'
 
-    sys.stdout.write_color(fmt.format(text, barstr, int(100*r)))
+    sys.stdout.write(fmt.format(text, barstr, int(100*r)))
     sys.stdout.flush()
 
 
