@@ -66,15 +66,15 @@ def eval_command(opts, args):
   mutag = Mutag(prof = prof)
 
   if opts.cmd == 'autotag':
-    ui.print_color("autotaging new messages under #B%s#t\n" % mutag.maildir)
-    ui.print_color("  retrieving messages\n")
+    ui.print_color("autotaging new messages under #B%s#t" % mutag.maildir)
+    ui.print_color("  retrieving messages")
     L = mutag.query(opts.query, path = opts.path,
                     modified_only=opts.modified, related=True)
-    ui.print_color("  retagging messages\n")
+    ui.print_color("  retagging messages")
     mutag.autotag(L, dryrun=opts.dryrun)
 
   if opts.cmd == 'expire':
-    ui.print_color("expiring old messages under #B%s#t\n" % mutag.maildir)
+    ui.print_color("expiring old messages under #B%s#t" % mutag.maildir)
     mutag.expire(dryrun=opts.dryrun)
 
   if opts.cmd in set(['autotag', 'expire']) and opts.index:
