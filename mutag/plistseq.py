@@ -45,5 +45,5 @@ plistseq = ZeroOrMore(plist)
 
 
 def parse(raw):
-  pls = plistseq.parseString(raw)
-  return pls.asList()
+    pls = plistseq.parseString(raw)
+    return pls.asList()

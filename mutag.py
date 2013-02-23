@@ -31,87 +31,87 @@ from mutag import __version__
 
 def get_profile(conf, opts):
 
-  if opts.profile: name = opts.profile
-  else:            name = conf.get('mutag', 'defaultprofile')
+    if opts.profile: name = opts.profile
+    else:            name = conf.get('mutag', 'defaultprofile')
 
-  # TODO: catch nonexistent profile
+    # TODO: catch nonexistent profile
 
-  prof = {}
-  prof['muhome'] = os.path.expanduser(conf.get('profile %s' % name, 'muhome'))
-  prof['maildir'] = os.path.expanduser(conf.get('profile %s' % name, 'maildir'))
+    prof = {}
+    prof['muhome'] = os.path.expanduser(conf.get('profile %s' % name, 'muhome'))
+    prof['maildir'] = os.path.expanduser(conf.get('profile %s' % name, 'maildir'))
 
-  prof['trash'] = conf.get('profile %s' % name, 'trash')
-  prof['expiredays'] = int(conf.get('profile %s' % name, 'expiredays'))
+    prof['trash'] = conf.get('profile %s' % name, 'trash')
+    prof['expiredays'] = int(conf.get('profile %s' % name, 'expiredays'))
 
-  prof['lastmtime'] = os.path.expanduser(conf.get('profile %s' % name, 'lastmtime'))
-  prof['tagrules'] = os.path.expanduser(conf.get('profile %s' % name, 'tagrules'))
+    prof['lastmtime'] = os.path.expanduser(conf.get('profile %s' % name, 'lastmtime'))
+    prof['tagrules'] = os.path.expanduser(conf.get('profile %s' % name, 'tagrules'))
 
-  if opts.muhome: prof['muhome'] = os.path.expanduser(opts.muhome)
-  if opts.muhome: prof['maildir'] = os.path.expanduser(opts.maildir)
+    if opts.muhome: prof['muhome'] = os.path.expanduser(opts.muhome)
+    if opts.muhome: prof['maildir'] = os.path.expanduser(opts.maildir)
 
-  return prof
+    return prof
 
 
 
 def eval_command(opts, args):
-  conf = RawConfigParser(defaults={})
-  conf.read([os.path.expanduser('~/.config/mutag/mutag.conf')])
-  ui.set_debug(opts.debug)
+    conf = RawConfigParser(defaults={})
+    conf.read([os.path.expanduser('~/.config/mutag/mutag.conf')])
+    ui.set_debug(opts.debug)
 
-  ui.use_color(conf.getboolean("mutag", 'color'))
-  # If the output is not a terminal, remove the colors
-  if not sys.stdout.isatty(): ui.use_color(False)
+    ui.use_color(conf.getboolean("mutag", 'color'))
+    # If the output is not a terminal, remove the colors
+    if not sys.stdout.isatty(): ui.use_color(False)
 
-  prof = get_profile(conf, opts)
-  mutag = Mutag(prof = prof)
+    prof = get_profile(conf, opts)
+    mutag = Mutag(prof = prof)
 
-  if opts.cmd == 'autotag':
-    ui.print_color("autotaging new messages under #B%s#t" % mutag.maildir)
-    ui.print_color("  retrieving messages")
-    L = mutag.query(opts.query, path = opts.path,
-                    modified_only=opts.modified, related=True)
-    ui.print_color("  retagging messages")
-    mutag.autotag(L, dryrun=opts.dryrun)
+    if opts.cmd == 'autotag':
+        ui.print_color("autotaging new messages under #B%s#t" % mutag.maildir)
+        ui.print_color("  retrieving messages")
+        L = mutag.query(opts.query, path = opts.path,
+                        modified_only=opts.modified, related=True)
+        ui.print_color("  retagging messages")
+        mutag.autotag(L, dryrun=opts.dryrun)
 
-  if opts.cmd == 'expire':
-    ui.print_color("expiring old messages under #B%s#t" % mutag.maildir)
-    mutag.expire(dryrun=opts.dryrun)
+    if opts.cmd == 'expire':
+        ui.print_color("expiring old messages under #B%s#t" % mutag.maildir)
+        mutag.expire(dryrun=opts.dryrun)
 
-  if opts.cmd in set(['autotag', 'expire']) and opts.index:
-    mutag.index(dryrun=opts.dryrun)
+    if opts.cmd in set(['autotag', 'expire']) and opts.index:
+        mutag.index(dryrun=opts.dryrun)
 
-  elif opts.cmd == 'count':
-    num = mutag.count(opts.query, modified_only=opts.modified)
-    print(num)
+    elif opts.cmd == 'count':
+        num = mutag.count(opts.query, modified_only=opts.modified)
+        print(num)
 
-  elif opts.cmd == 'dedup':
-    # TODO
-    print("dedup not implemented")
-    sys.exit()
+    elif opts.cmd == 'dedup':
+        # TODO
+        print("dedup not implemented")
+        sys.exit()
 
-  elif opts.cmd == 'tag':
-    L = mutag.query(opts.query, path = opts.path,
-                    modified_only=opts.modified, related=False)
-    mutag.change_tags(L, args, dryrun=opts.dryrun)
-    if opts.index and len(L) > 0: mutag.index(dryrun=opts.dryrun)
+    elif opts.cmd == 'tag':
+        L = mutag.query(opts.query, path = opts.path,
+                        modified_only=opts.modified, related=False)
+        mutag.change_tags(L, args, dryrun=opts.dryrun)
+        if opts.index and len(L) > 0: mutag.index(dryrun=opts.dryrun)
 
-  elif opts.cmd == 'list':
-    L = mutag.query(opts.query, path = opts.path,
-                    modified_only=opts.modified, related=False)
-    for msg in L:
-      ui.print_color(msg.tostring(fmt=opts.format))
+    elif opts.cmd == 'list':
+        L = mutag.query(opts.query, path = opts.path,
+                        modified_only=opts.modified, related=False)
+        for msg in L:
+            ui.print_color(msg.tostring(fmt=opts.format))
 
-  elif opts.cmd == 'print':
-    L = mutag.query(opts.query, path = opts.path,
-                    modified_only=opts.modified, related=False)
-    for msg in L:
-      print(msg.raw())
+    elif opts.cmd == 'print':
+        L = mutag.query(opts.query, path = opts.path,
+                        modified_only=opts.modified, related=False)
+        for msg in L:
+            print(msg.raw())
 
-  # Index if asked to and not done in a specific command
-  if opts.index and not opts.cmd in ['autotag', 'tag']: mutag.index(dryrun=opts.dryrun)
+    # Index if asked to and not done in a specific command
+    if opts.index and not opts.cmd in ['autotag', 'tag']: mutag.index(dryrun=opts.dryrun)
 
-  # Update mtime
-  if opts.update: mutag.update_mtime(dryrun=opts.dryrun)
+    # Update mtime
+    if opts.update: mutag.update_mtime(dryrun=opts.dryrun)
 
 
 
@@ -195,17 +195,17 @@ parser.add_option("--debug", action="store_true", default=False, dest="debug",
 (opts, args) = parser.parse_args()
 
 if opts.version:
-  print(__version__)
-  sys.exit(0)
+    print(__version__)
+    sys.exit(0)
 
 
 try:
-  eval_command(opts, args)
+    eval_command(opts, args)
 
 except KeyboardInterrupt:
-  print("")
-  sys.exit()
+    print("")
+    sys.exit()
 
 except EOFError:
-  print("")
-  sys.exit()
+    print("")
+    sys.exit()

@@ -43,50 +43,50 @@ import subprocess
 
 class TagRules(object):
 
-  # Initialization
-  # --------------------------
+    # Initialization
+    # --------------------------
 
-  def __init__(self):
-    super().__init__()
+    def __init__(self):
+        super().__init__()
 
-    # Do initializations of the object, like setting variables, etc.
-    # You can also load external data here.
+        # Do initializations of the object, like setting variables, etc.
+        # You can also load external data here.
 
-    # For example, you can declare a dictionary of addresses for which you
-    # want special tags.
-    self.taglist = {
-      'emacs-orgmode@gnu.org'   : ['list', 'org'],
-      'bla@gmail.com'           : ['boss']
-      # etc.
-      }
+        # For example, you can declare a dictionary of addresses for which you
+        # want special tags.
+        self.taglist = {
+          'emacs-orgmode@gnu.org'   : ['list', 'org'],
+          'bla@gmail.com'           : ['boss']
+          # etc.
+          }
 
-    # Rules to apply
-    self.rules = [
-      ('contacts',     self._tags_taglist),
-      # Whatever rules you like to apply
-      ]
-
-
-  # Interface
-  # --------------------------
-
-  # This is the only required function. It takes a message as argument,
-  # and returns a set of tags that will replace the current msg tags.
-
-  def get_tags(self, msg):
-    tags = set(msg['tags'])
-    for rname, rfunc in self.rules:
-      rfunc(msg, tags)
-    return tags
+        # Rules to apply
+        self.rules = [
+          ('contacts',     self._tags_taglist),
+          # Whatever rules you like to apply
+          ]
 
 
-  # The tagging rules
-  # --------------------------
+    # Interface
+    # --------------------------
 
-  # apply tags according to the taglist dictionary.
-  # msg: the message
-  # tags: a set of currently computed tags.
-  def _tags_taglist(self, msg, tags):
-    for k, val in self.taglist.items():
-      if k in msg['emails']:
-        tags.update(val)
+    # This is the only required function. It takes a message as argument,
+    # and returns a set of tags that will replace the current msg tags.
+
+    def get_tags(self, msg):
+        tags = set(msg['tags'])
+        for rname, rfunc in self.rules:
+            rfunc(msg, tags)
+        return tags
+
+
+    # The tagging rules
+    # --------------------------
+
+    # apply tags according to the taglist dictionary.
+    # msg: the message
+    # tags: a set of currently computed tags.
+    def _tags_taglist(self, msg, tags):
+        for k, val in self.taglist.items():
+            if k in msg['emails']:
+                tags.update(val)
