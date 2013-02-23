@@ -155,27 +155,27 @@ def write_color(text, file=sys.stdout):
 
 def print_debug(t, level=1):
     global _debug
-    if level <= _debug: write("#*gdebug:#t %s\n" % t, file=sys.stderr)
+    if level <= _debug: write_color("#*gdebug:#t %s\n" % t, file=sys.stderr)
 
 def print_message(text):
-    write(" %s\n" % text, file=sys.stdout)
+    write_color(" %s\n" % text, file=sys.stdout)
 
 def print_error(text):
-    write('#*rerror: #w%s\n' % text, file=sys.stderr)
+    write_color('#*rerror: #w%s\n' % text, file=sys.stderr)
 
 def print_warning(text):
-    write('#*ywarning: #w%s\n' % text, file=sys.stderr)
+    write_color('#*ywarning: #w%s\n' % text, file=sys.stderr)
 
 
 
 def print_item(text):
-    write('%s * #w%s\n' % (mc, text), file=sys.stdout)
+    write_color('%s * #w%s\n' % (mc, text), file=sys.stdout)
 
 def print_heading(text):
-    write('%s > #w%s\n' % (mc, text), file=sys.stdout)
+    write_color('%s > #w%s\n' % (mc, text), file=sys.stdout)
 
 def print_enum(i, n, text):
-    write('%s(%d/%d) #t%s\n' % (mc, i, n, text), file=sys.stdout)
+    write_color('%s(%d/%d) #t%s\n' % (mc, i, n, text), file=sys.stdout)
 
 
 
@@ -205,10 +205,10 @@ def print_status(text=None, flag=None, nl=None):
         if nl: fmt = fmt + '\n'
         else: fmt = fmt + '\r'
 
-        write(fmt.format(text, sta), file=sys.stdout)
+        write_color(fmt.format(text, sta), file=sys.stdout)
     else:
         fmt = '\r%s:: #w{0:<%s}\n' % (mc, width)
-        write(fmt.format(text), file=sys.stdout)
+        write_color(fmt.format(text), file=sys.stdout)
 
 
 def print_progress(text, r, nl=None):
@@ -229,12 +229,12 @@ def print_progress(text, r, nl=None):
     if nl: fmt = fmt + '\n'
     else: fmt = fmt + '\r'
 
-    sys.stdout.write(fmt.format(text, barstr, int(100*r)))
+    sys.stdout.write_color(fmt.format(text, barstr, int(100*r)))
     sys.stdout.flush()
 
 
 def ask_question_string(question):
-    write('%s ? #w%s ' % (mc, question), file=sys.stderr)
+    write_color('%s ? #w%s ' % (mc, question), file=sys.stderr)
     return input()
 
 
@@ -248,7 +248,7 @@ def ask_question_yesno(question, default=None):
         if val == 'y':              return 'yes'
         elif val == 'n':            return 'no'
         elif default and val == '': return default
-        else: write('Invalid answer.\n')
+        else: write_color('Invalid answer.\n')
 
 
 # vim: expandtab:shiftwidth=4:tabstop=4:softtabstop=4:textwidth=80
