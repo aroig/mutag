@@ -84,7 +84,7 @@ class Mutag(object):
             elif t in oldtags and not t in newtags: L.append('#R-%s' % t)
             elif not t in oldtags and t in newtags: L.append('#G+%s' % t)
         tagch = '#W, '.join(L)
-        ui.print_color('#C{0} #W[{1}#W]\n'.format(msg['subject'], tagch))
+        ui.print_color('#C{0} #W[{1}#W]'.format(msg['subject'], tagch))
 
 
     def _load_tagrules(self):
@@ -329,7 +329,7 @@ class Mutag(object):
                 self._print_tagschange(msg, tags, newtags)
                 if not dryrun: msg.set_tags(newtags)
 
-        ui.print_color("Processed #G%d#t files, and retagged #G%d#t.\n" % (len(msglist), tagged_count))
+        ui.print_color("Processed #G%d#t files, and retagged #G%d#t." % (len(msglist), tagged_count))
 
 
 
@@ -349,7 +349,7 @@ class Mutag(object):
                     self.move_to_maildir(msg, self.trash_path)
 #          self.mark_as_trash(msg)
 
-        ui.print_color("Processed #G%d#t files, and expired #G%d#t.\n" % (len(msglist), expired_count))
+        ui.print_color("Processed #G%d#t files, and expired #G%d#t." % (len(msglist), expired_count))
 
 
 
