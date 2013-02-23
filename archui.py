@@ -36,18 +36,25 @@ try:
 except:
     _numcolors = 2
 
+if sys.version_info[0] <= 2:
+    def _str(n):
+        return str(n)
+else:
+    def _str(n):
+        return str(n, encoding='ascii')
+
 
 if _numcolors >= 16:
     for i, k in enumerate("krgybmcw"):
-        _cc[k.upper()] = str(curses.tparm(_setfg, i), encoding='ascii')          # dark
-        _cc[k]         = str(curses.tparm(_setfg, i + 8), encoding='ascii')      # light
-        _cc['*'+k]     = str(_bold + curses.tparm(_setfg, i), encoding='ascii')  # bold
+        _cc[k.upper()] = _str(curses.tparm(_setfg, i))          # dark
+        _cc[k]         = _str(curses.tparm(_setfg, i + 8))      # light
+        _cc['*'+k]     = _str(_bold + curses.tparm(_setfg, i))  # bold
 
 elif _numcolors >= 8:
     for i, k in enumerate("krgybmcw"):
-        _cc[k.upper()] = str(curses.tparm(_setfg, i), encoding='ascii')          # dark
-        _cc[k]         = str(_bold + curses.tparm(_setfg, i), encoding='ascii')  # bold
-        _cc['*'+k]     = str(_bold + curses.tparm(_setfg, i), encoding='ascii')  # bold
+        _cc[k.upper()] = _str(curses.tparm(_setfg, i))          # dark
+        _cc[k]         = _str(_bold + curses.tparm(_setfg, i))  # bold
+        _cc['*'+k]     = _str(_bold + curses.tparm(_setfg, i))  # bold
 
 else:
     for i, k in enumerate("krgybmcw"):
@@ -139,18 +146,12 @@ def color(s):
     return ret
 
 
-# DEPRECATED
 def print_color(text, file=sys.stdout):
-    file.write('%s' % color(text))
-    file.flush()
-
+    write(text + '\n', file)
 
 def write(text, file=sys.stdout):
     file.write('%s' % color(text))
     file.flush()
-
-def print(text, file=sys.stdout):
-    write(text + '\n')
 
 def print_debug(t, level=1):
     global _debug
