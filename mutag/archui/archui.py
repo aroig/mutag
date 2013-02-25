@@ -141,7 +141,8 @@ def get_line_width():
 
 
 def strip_color(s):
-    return re.sub('\033\[[0-9;]+m', '', s)
+    return re.sub(r'\x1b[^m]*m|\x1b[^B]*B', '', s)
+
 
 def color(s):
     global _use_color
