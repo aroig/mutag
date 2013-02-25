@@ -176,10 +176,10 @@ def print_warning(text):
 
 
 def print_item(text):
-    write_color('%s * #w%s\n' % (_mc, text), file=sys.stdout)
+    write_color('%s * #*w%s\n' % (_mc, text), file=sys.stdout)
 
 def print_heading(text):
-    write_color('%s > #w%s\n' % (_mc, text), file=sys.stdout)
+    write_color('%s > #*w%s\n' % (_mc, text), file=sys.stdout)
 
 def print_enum(i, n, text):
     write_color('%s(%d/%d) #t%s\n' % (_mc, i, n, text), file=sys.stdout)
@@ -208,13 +208,13 @@ def print_status(text=None, flag=None, nl=None):
         else:                  col = '#W'
         sta = '%s[%s%s%s]' % (_mc, col, flag, _mc)
 
-        fmt = '\r%s:: #w{0:<%s}{1:>%s}' % (_mc, mwidth, fwidth)
+        fmt = '\r%s:: #*w{0:<%s}{1:>%s}' % (_mc, mwidth, fwidth)
         if nl: fmt = fmt + '\n'
         else: fmt = fmt + '\r'
 
         write_color(fmt.format(text, sta), file=sys.stdout)
     else:
-        fmt = '\r%s:: #w{0:<%s}\n' % (_mc, width)
+        fmt = '\r%s:: #*w{0:<%s}\n' % (_mc, width)
         write_color(fmt.format(text), file=sys.stdout)
 
 
@@ -241,7 +241,7 @@ def print_progress(text, r, nl=None):
 
 
 def ask_question_string(question):
-    write_color('%s ? #w%s ' % (_mc, question), file=sys.stderr)
+    write_color('%s ? #*w%s ' % (_mc, question), file=sys.stderr)
     return input()
 
 
