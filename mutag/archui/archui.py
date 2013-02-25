@@ -24,6 +24,7 @@ from collections import OrderedDict
 
 _cc = OrderedDict()
 
+# Load curses
 try:
     import curses
     curses.setupterm()
@@ -32,10 +33,13 @@ try:
     _setfg = curses.tigetstr('setaf')
     _setbg = curses.tigetstr('setab')
     _bold  = curses.tigetstr('bold')
+    _reset = curses.tigetstr('sgr0')
 
 except:
     _numcolors = 2
 
+
+# Encode in ascii
 if sys.version_info[0] <= 2:
     def _str(n):
         return str(n)
@@ -46,25 +50,27 @@ else:
 
 if _numcolors >= 16:
     for i, k in enumerate("krgybmcw"):
-        _cc[k.upper()] = _str(curses.tparm(_setfg, i))          # dark
-        _cc[k]         = _str(curses.tparm(_setfg, i + 8))      # light
-        _cc['*'+k]     = _str(_bold + curses.tparm(_setfg, i))  # bold
+        _cc[k.upper()] = _str(_reset + curses.tparm(_setfg, i))     # dark
+        _cc[k]         = _str(_reset + curses.tparm(_setfg, i + 8)) # light
+        _cc['*'+k]     = _str(_bold + curses.tparm(_setfg, i))      # bold
+        _cc['t']       = _str(_reset)
+        _cc['#']       = "#"
 
 elif _numcolors >= 8:
     for i, k in enumerate("krgybmcw"):
-        _cc[k.upper()] = _str(curses.tparm(_setfg, i))          # dark
+        _cc[k.upper()] = _str(_reset + curses.tparm(_setfg, i)) # dark
         _cc[k]         = _str(_bold + curses.tparm(_setfg, i))  # bold
         _cc['*'+k]     = _str(_bold + curses.tparm(_setfg, i))  # bold
+        _cc['t']       = _str(_reset)
+        _cc['#']       = "#"
 
 else:
     for i, k in enumerate("krgybmcw"):
         _cc[k.upper()] = ""
         _cc[k]         = ""
         _cc['*'+k]     = ""
-
-
-_cc['t'] = "\033[0m"
-_cc['#'] = "#"
+        _cc['t']       = "\033[0m"
+        _cc['#']       = "#"
 
 
 fc = {'done'  : '#G',
@@ -74,14 +80,15 @@ fc = {'done'  : '#G',
       'stop'  : '#G'
       }
 
-mc = '#*b'
 
-maxwidth = 80
 
-_debug      = 0
-_use_color  = True
+# Internal state
+_mc = '#*b'           # main color
+_maxwidth = 80        # max text width
 
-_last_status = ""
+_debug      = 0       # debug flag
+_use_color  = True    # use colors flag
+_last_status = ""     # remember text of last print_status
 
 
 def set_debug(dbg):
@@ -93,8 +100,8 @@ def use_color(cl):
     _use_color = cl
 
 def set_main_color(c):
-    global mc
-    mc = c
+    global _mc
+    _mc = c
 
 def get_terminal_size():
     env = os.environ
@@ -130,7 +137,7 @@ def get_terminal_size():
 def get_line_width():
     row, col = get_terminal_size()
     if col: return col
-    else:   return maxwidth
+    else:   return _maxwidth
 
 
 def strip_color(s):
@@ -169,19 +176,19 @@ def print_warning(text):
 
 
 def print_item(text):
-    write_color('%s * #w%s\n' % (mc, text), file=sys.stdout)
+    write_color('%s * #w%s\n' % (_mc, text), file=sys.stdout)
 
 def print_heading(text):
-    write_color('%s > #w%s\n' % (mc, text), file=sys.stdout)
+    write_color('%s > #w%s\n' % (_mc, text), file=sys.stdout)
 
 def print_enum(i, n, text):
-    write_color('%s(%d/%d) #t%s\n' % (mc, i, n, text), file=sys.stdout)
+    write_color('%s(%d/%d) #t%s\n' % (_mc, i, n, text), file=sys.stdout)
 
 
 
 # TODO: get rid of nl where I use it
 def print_status(text=None, flag=None, nl=None):
-    width = min(get_line_width(), maxwidth)
+    width = min(get_line_width(), _maxwidth)
 
     fwidth = 10
     mwidth = width - fwidth
@@ -199,15 +206,15 @@ def print_status(text=None, flag=None, nl=None):
     if flag:
         if flag.lower() in fc: col = fc[flag.lower()]
         else:                  col = '#W'
-        sta = '%s[%s%s%s]' % (mc, col, flag, mc)
+        sta = '%s[%s%s%s]' % (_mc, col, flag, _mc)
 
-        fmt = '\r%s:: #w{0:<%s}{1:>%s}' % (mc, mwidth, fwidth)
+        fmt = '\r%s:: #w{0:<%s}{1:>%s}' % (_mc, mwidth, fwidth)
         if nl: fmt = fmt + '\n'
         else: fmt = fmt + '\r'
 
         write_color(fmt.format(text, sta), file=sys.stdout)
     else:
-        fmt = '\r%s:: #w{0:<%s}\n' % (mc, width)
+        fmt = '\r%s:: #w{0:<%s}\n' % (_mc, width)
         write_color(fmt.format(text), file=sys.stdout)
 
 
@@ -234,7 +241,7 @@ def print_progress(text, r, nl=None):
 
 
 def ask_question_string(question):
-    write_color('%s ? #w%s ' % (mc, question), file=sys.stderr)
+    write_color('%s ? #w%s ' % (_mc, question), file=sys.stderr)
     return input()
 
 
