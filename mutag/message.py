@@ -188,8 +188,11 @@ class Message(dict):
         if not self.msg:
             self.load_message()
 
-        payload = self.msg.get_payload(decode=True)
-        return payload
+        payload = []
+        for part in self.msg.walk():
+            if 'text/' in part.get_content_type():
+                payload.append(part.get_payload(decode=True))
+        return '\n'.join(payload)
 
 
 
