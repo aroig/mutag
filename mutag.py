@@ -107,6 +107,13 @@ def eval_command(opts, args):
         for msg in L:
             print(msg.raw())
 
+    elif opts.cmd == 'filename':
+        L = mutag.query(opts.query, path = opts.path,
+                        modified_only=opts.modified, related=False)
+        for msg in L:
+            print(msg['path'])
+
+
     # Index if asked to and not done in a specific command
     if opts.index and not opts.cmd in ['autotag', 'tag']: mutag.index(dryrun=opts.dryrun)
 
@@ -146,6 +153,9 @@ parser.add_option("-L", "--list", action="store_const", const="list", default=No
 
 parser.add_option("-P", "--print", action="store_const", const="print", default=None, dest="cmd",
                   help="Print raw messages")
+
+parser.add_option("-F", "--filename", action="store_const", const="filename", default=None, dest="cmd",
+                  help="Print the filenames")
 
 
 
