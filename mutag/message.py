@@ -55,7 +55,7 @@ class Message(dict):
                 author = ' <none> '
             tagstr = '#W, '.join(sorted(['#Y%s' % t for t in self['tags']]))
             datestr = self['date'].strftime('%Y-%m-%d %H:%M')
-            return '#M{0} #C{1} #G{2} #W[{3}#W]\n'.format(datestr, author, str(self['subject']), tagstr)
+            return '#M{0} #C{1} #G{2} #W[{3}#W]'.format(datestr, author, str(self['subject']), tagstr)
 
         elif fmt == 'raw':
             return pprint.pformat(self, indent=2) + '\n\n'
