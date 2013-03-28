@@ -177,7 +177,11 @@ class Mutag(object):
 
     def move_to_maildir(self, msg, tgt):
         path = msg['path']
-        newpath = os.path.join(tgt, 'new', os.path.basename(path))
+
+        rem, base = os.path.split(path)
+        rem, sub = os.path.split(rem)
+
+        newpath = os.path.join(tgt, sub, base)
         if path and os.path.exists(path):
             shutil.move(path, newpath)
             msg['path'] = newpath
@@ -198,7 +202,7 @@ class Mutag(object):
             msg.set_flags(['trashed', 'seen'])
 
             # make hard link in trash
-            os.link(msg['path'], os.path.join(self.trash_path, 'new', os.path.basename(msg['path'])))
+            os.link(msg['path'], os.path.join(self.trash_path, 'cur', os.path.basename(msg['path'])))
 
             # remove from original folder only if it is not a gmail folder
             if not re.sub('^/', '', msg['maildir']) in self.gmail_folders:
