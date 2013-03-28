@@ -373,10 +373,14 @@ class Mutag(object):
         for msg in msglist:
             if self.should_ignore_path(os.path.join(self.maildir, re.sub('^/', '', msg['maildir']))):
                 continue
+
             if tr.expire(msg, expire_date):
                 self._print_expired(msg)
                 expired_count = expired_count + 1
                 if not dryrun: self.trash(msg)
+            else:
+                tags = msg['tags']
+                if not dryrun: msg.set_tags(tags | set([tr.noexpire_tag]))
 
         ui.print_color("Processed #G%d#t files, and expired #G%d#t." % (len(msglist), expired_count))
 
