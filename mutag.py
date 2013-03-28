@@ -102,6 +102,12 @@ def eval_command(opts, args):
         mutag.change_tags(L, args, dryrun=opts.dryrun)
         if opts.index and len(L) > 0: mutag.index(dryrun=opts.dryrun)
 
+    elif opts.cmd == 'flag':
+        L = mutag.query(opts.query, path = opts.path,
+                        modified_only=opts.modified, related=False)
+        mutag.change_flags(L, args, dryrun=opts.dryrun)
+        if opts.index and len(L) > 0: mutag.index(dryrun=opts.dryrun)
+
     elif opts.cmd == 'list':
         L = mutag.query(opts.query, path = opts.path,
                         modified_only=opts.modified, related=False)
@@ -154,6 +160,9 @@ parser.add_option("-D", "--dedup", action="store_const", const="dedup", default=
 
 parser.add_option("-T", "--tag", action="store_const", const="tag", default=None, dest="cmd",
                   help="Change tags")
+
+parser.add_option("-G", "--flag", action="store_const", const="flag", default=None, dest="cmd",
+                  help="Change flags")
 
 parser.add_option("-L", "--list", action="store_const", const="list", default=None, dest="cmd",
                   help="List messages")

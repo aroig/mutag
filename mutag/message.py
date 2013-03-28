@@ -232,10 +232,14 @@ class Message(dict):
         if 'replied' in flags: flagstr = flagstr + 'R'
         if 'trashed' in flags: flagstr = flagstr + 'T'
 
-        if self['path']:
-            newpath = re.sub(':2,[SDFTRP]*$', '', self['path']) + ":2,%s" % flagstr
+        if self['path'] and set(flags) != set(self['flags']):
+            path, basename = os.path.split(re.sub(':2,[SDFTRP]*$', '', self['path']))
+            path, subdir = os.path.split(path)
+            newpath = os.path.join(path, 'cur', basename + ":2,%s" % flagstr)
+
             if newpath != self['path']:
-                os.rename(self['path'], newpath)
+                os.link(self['path'], newpath)
+                os.unlink(self['path'])
                 self['path'] = newpath
 
 

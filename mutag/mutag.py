@@ -337,6 +337,25 @@ class Mutag(object):
                 if not dryrun: msg.set_tags(newtags)
 
 
+    def change_flags(self, msglist, flagactions, dryrun=False):
+        addflags = set()
+        delflags = set()
+        for fa in flagactions:
+            mdel = re.search('^\s*-(.*)\s*$', fa)
+            madd = re.search('^\s*\+(.*)\s*$', fa)
+
+            if mdel:   delflags.add(mdel.group(1))
+            elif madd: addflags.add(madd.group(1))
+            else:      addflags.add(fa.strip())
+
+        for msg in msglist:
+            flags = set(msg['flags'])
+            newflags = flags.union(addflags).difference(delflags)
+            if flags != newflags:
+                self._print_tagschange(msg, flags, newflags)
+                if not dryrun: msg.set_flags(newflags)
+
+
 
     def autotag(self, msglist, dryrun=False):
 
