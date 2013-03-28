@@ -343,6 +343,10 @@ class Mutag(object):
                 continue
 
             tags = set(msg['tags'])
+
+            if self.trash_tag in tags or 'trashed' in msg['flags']  or 'deleted' in msg['flags']:
+                continue
+
             newtags = tr.get_tags(msg)
             ui.print_debug("%s -> %s" % (', '.join(tags), ', '.join(newtags)))
             if tags != newtags:
