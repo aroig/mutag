@@ -189,15 +189,20 @@ class Mutag(object):
            it from 'All Mail' next sync puts back the message before it realizes
            it was trashed!
         """
-        # tag as trashed
-        if self.trash_tag: msg.set_tags([self.trash_tag])
-        else:              msg.set_tags(['\\Trash'])
+        if os.path.exists(msg['path']):
+            # tag as trashed
+            if self.trash_tag: msg.set_tags([self.trash_tag])
+            else:              msg.set_tags(['\\Trash'])
 
-        # TODO: set trashed maildir flag?
+            # set maildir flags
+            msg.set_flags(['trashed', 'seen'])
 
-        # move to trash if not in a gmail folder
-        if not re.sub('^/', '', msg['maildir']) in self.gmail_folders:
-            self.move_to_maildir(msg, self.trash_folder)
+            # make hard link in trash
+            os.link(msg['path'], os.path.join(self.trash_folder, 'new', os.path.basename(msg['path'])))
+
+            # remove from original folder only if it is not a gmail folder
+            if not re.sub('^/', '', msg['maildir']) in self.gmail_folders:
+                os.unlink(msg['path'])
 
 
     # Mu database

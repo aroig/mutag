@@ -130,7 +130,6 @@ class Message(dict):
         self._fill_derived_fields()
 
 
-
     def from_file(self, path, maildir):
         msg = self
         msg['path'] = path
@@ -195,7 +194,6 @@ class Message(dict):
         return '\n'.join(payload)
 
 
-
     def message_addheader(self, content, headername, headervalue):
         """Changes the value of headername to headervalue if the header exists,
         or adds it if it does not exist"""
@@ -223,7 +221,27 @@ class Message(dict):
         return leader + trailer
 
 
+    def set_flags(self, flags):
+        """Sets flags of message"""
+        flagstr = ''
+        if 'seen' in flags: flagstr = flagstr + 'S'
+        if 'new' in flags: flagstr = flagstr + 'N'
+        if 'draft' in flags: flagstr = flagstr + 'D'
+        if 'flagged' in flags: flagstr = flagstr + 'F'
+        if 'trashed' in flags: flagstr = flagstr + 'T'
+        if 'deleted' in flags: flagstr = flagstr + 'D'
+        if 'replied' in flags: flagstr = flagstr + 'R'
+        if 'passed' in flags: flagstr = flagstr + 'P'
+
+        if self['path']:
+            newpath = re.sub('^(.*):2,([SDFTRP]*)$', '', self['path']) + ":2,%s" % sorted(flagstr)
+            if newpath != self['path']:
+                os.rename(self['path'], newpath)
+                self['path'] = newpath
+
+
     def set_tags(self, tags):
+        """Sets tags of message"""
         with open(self['path'], 'rb') as fd:
             content = fd.read()
 
