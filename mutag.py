@@ -68,6 +68,10 @@ def eval_command(opts, args):
     prof = get_profile(conf, opts)
     mutag = Mutag(prof = prof)
 
+    # escape '\' in query so xapian understands us.
+    if opts.query:
+        opts.query = opts.query.replace('\\', '\\\\')
+
     if opts.cmd == 'autotag':
         ui.print_color("autotaging new messages under #B%s#t" % mutag.maildir)
         ui.print_color("  retrieving messages")
