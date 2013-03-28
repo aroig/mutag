@@ -242,6 +242,9 @@ class Message(dict):
         # move back to initial position
         os.rename(tmppath, self['path'])
 
+        # update tags
+        self['tags'] = set(tags)
+
 
     def get_mtime(self):
         return int(os.stat(self['path']).st_mtime)

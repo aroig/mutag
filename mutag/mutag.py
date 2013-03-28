@@ -42,7 +42,12 @@ class Mutag(object):
         self.muhome = prof['muhome']
         self.maildir = prof['maildir']
 
-        self.trash_path = os.path.join(self.maildir, prof['trash'])
+        self.trash_tag = prof['trashtag'].strip()
+        if len(self.trash_tag) == 0: self.trash_tag = None
+
+        self.trash_path = os.path.join(self.maildir, prof['trashfolder'])
+        self.gmail_folders = prof['gmailfolders']
+
         self.expire_days = prof['expiredays']
 
         self.tagrules_path = prof['tagrules']
@@ -85,6 +90,10 @@ class Mutag(object):
             elif not t in oldtags and t in newtags: L.append('#G+%s' % t)
         tagch = '#W, '.join(L)
         ui.print_color('#C{0} #W[{1}#W]'.format(msg['subject'], tagch))
+
+
+    def _print_expired(self, msg):
+        ui.print_color('expired: %s' % msg.tostring('compact'))
 
 
     def _load_tagrules(self):
@@ -168,15 +177,27 @@ class Mutag(object):
 
     def move_to_maildir(self, msg, tgt):
         path = msg['path']
+        newpath = os.path.join(tgt, 'new', os.path.basename(path))
         if path and os.path.exists(path):
-            shutil.move(path, os.path.join(tgt, 'cur'))
+            shutil.move(path, newpath)
+            msg['path'] = newpath
 
 
-    def mark_as_trash(self, msg):
-        # set tags to ['\\Trash']. gmail will move it to trash when syncing.
-        msg.set_tags(['\\Trash'])
+    def trash(self, msg):
+        """Trash a message. Moves to trash. On gmail folders only marks it as
+           trash. Next sync will take care of removing it. Otherwise, if I remove
+           it from 'All Mail' next sync puts back the message before it realizes
+           it was trashed!
+        """
+        # tag as trashed
+        if self.trash_tag: msg.set_tags([self.trash_tag])
+        else:              msg.set_tags(['\\Trash'])
 
+        # TODO: set trashed maildir flag?
 
+        # move to trash if not in a gmail folder
+        if not re.sub('^/', '', msg['maildir']) in self.gmail_folders:
+            self.move_to_maildir(msg, self.trash_folder)
 
 
     # Mu database
@@ -334,6 +355,7 @@ class Mutag(object):
 
 
     def expire(self, dryrun=False):
+        """Marks all messages that need expiring as trashed"""
         tr = self._load_tagrules()
         expire_date = datetime.datetime.today() - datetime.timedelta(days=self.expire_days)
 
@@ -343,11 +365,9 @@ class Mutag(object):
             if self.should_ignore_path(os.path.join(self.maildir, re.sub('^/', '', msg['maildir']))):
                 continue
             if tr.expire(msg, expire_date):
-#        ui.print_color(msg.tostring('compact'))
+                self._print_expired(msg)
                 expired_count = expired_count + 1
-                if not dryrun:
-                    self.move_to_maildir(msg, self.trash_path)
-#          self.mark_as_trash(msg)
+                if not dryrun: self.trash(msg)
 
         ui.print_color("Processed #G%d#t files, and expired #G%d#t." % (len(msglist), expired_count))
 

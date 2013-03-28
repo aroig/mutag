@@ -40,7 +40,10 @@ def get_profile(conf, opts):
     prof['muhome'] = os.path.expanduser(conf.get('profile %s' % name, 'muhome'))
     prof['maildir'] = os.path.expanduser(conf.get('profile %s' % name, 'maildir'))
 
-    prof['trash'] = conf.get('profile %s' % name, 'trash')
+    prof['trashtag'] = conf.get('profile %s' % name, 'trashtag')
+    prof['trashfolder'] = conf.get('profile %s' % name, 'trashfolder')
+    prof['gmailfolders'] = set([f.strip() for f in conf.get('profile %s' % name, 'gmailfolders').split(',')])
+
     prof['expiredays'] = int(conf.get('profile %s' % name, 'expiredays'))
 
     prof['lastmtime'] = os.path.expanduser(conf.get('profile %s' % name, 'lastmtime'))
