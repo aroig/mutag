@@ -223,18 +223,17 @@ class Message(dict):
 
     def set_flags(self, flags):
         """Sets flags of message"""
+        # careful, we need flagstr in alphabetical order!
         flagstr = ''
-        if 'seen' in flags: flagstr = flagstr + 'S'
-        if 'new' in flags: flagstr = flagstr + 'N'
         if 'draft' in flags: flagstr = flagstr + 'D'
         if 'flagged' in flags: flagstr = flagstr + 'F'
-        if 'trashed' in flags: flagstr = flagstr + 'T'
-        if 'deleted' in flags: flagstr = flagstr + 'D'
-        if 'replied' in flags: flagstr = flagstr + 'R'
+        if 'seen' in flags: flagstr = flagstr + 'S'
         if 'passed' in flags: flagstr = flagstr + 'P'
+        if 'replied' in flags: flagstr = flagstr + 'R'
+        if 'trashed' in flags: flagstr = flagstr + 'T'
 
         if self['path']:
-            newpath = re.sub('^(.*):2,([SDFTRP]*)$', '', self['path']) + ":2,%s" % sorted(flagstr)
+            newpath = re.sub(':2,[SDFTRP]*$', '', self['path']) + ":2,%s" % flagstr
             if newpath != self['path']:
                 os.rename(self['path'], newpath)
                 self['path'] = newpath

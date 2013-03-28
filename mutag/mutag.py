@@ -198,7 +198,7 @@ class Mutag(object):
             msg.set_flags(['trashed', 'seen'])
 
             # make hard link in trash
-            os.link(msg['path'], os.path.join(self.trash_folder, 'new', os.path.basename(msg['path'])))
+            os.link(msg['path'], os.path.join(self.trash_path, 'new', os.path.basename(msg['path'])))
 
             # remove from original folder only if it is not a gmail folder
             if not re.sub('^/', '', msg['maildir']) in self.gmail_folders:
