@@ -222,3 +222,5 @@ except KeyboardInterrupt:
 except EOFError:
     print("")
     sys.exit()
+
+# vim: expandtab:shiftwidth=4:tabstop=4:softtabstop=4:textwidth=80

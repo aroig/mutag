@@ -383,3 +383,5 @@ class Mutag(object):
         if len(L) > 0:
             mtime = max([int(os.stat(mp).st_mtime) for mp in L])
             if not dryrun: self.save_last_mtime(mtime)
+
+# vim: expandtab:shiftwidth=4:tabstop=4:softtabstop=4:textwidth=80

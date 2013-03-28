@@ -255,3 +255,5 @@ class Message(dict):
         for k in self:
             ret = ret + '{0}: {1}\n'.format(k, str(self[k]))
         return ret
+
+# vim: expandtab:shiftwidth=4:tabstop=4:softtabstop=4:textwidth=80

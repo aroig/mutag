@@ -28,3 +28,6 @@ setup(name         = 'mutag',
       author_email = 'abdo.roig@gmail.com',
       packages     = ['mutag', 'mutag.archui'],
       scripts      = ['bin/mutag'])
+
+
+# vim: expandtab:shiftwidth=4:tabstop=4:softtabstop=4:textwidth=80
