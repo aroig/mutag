@@ -411,11 +411,20 @@ class Mutag(object):
 
 
     def index(self, dryrun=False):
-        if not dryrun: self._mu('index', ['--maildir', self.maildir, '--autoupgrade'], catchout=False)
+        if not dryrun:
+            self._mu('index', ['--maildir', self.maildir, '--autoupgrade'], catchout=False)
 
 
     def rebuild(self, dryrun=False):
-        if not dryrun: self._mu('index', ['--rebuild', '--maildir', self.maildir, '--autoupgrade'], catchout=False)
+        if not dryrun:
+            self._mu('index', ['--rebuild', '--maildir', self.maildir, '--autoupgrade'], catchout=False)
+
+
+    def empty_trash(self, dryrun=False):
+        for f in glob.glob(os.path.join(self.trash_path, '*', '*')):
+            print("deleting: %s" % f)
+            if not dryrun:
+                os.remove(f)
 
 
     def update_mtime(self, dryrun=False):

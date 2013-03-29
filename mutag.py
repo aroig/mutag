@@ -55,7 +55,6 @@ def get_profile(conf, opts):
     return prof
 
 
-
 def eval_command(opts, args):
     conf = RawConfigParser(defaults={})
     conf.read([os.path.expanduser('~/.config/mutag/mutag.conf')])
@@ -72,9 +71,6 @@ def eval_command(opts, args):
     if opts.query:
         opts.query = opts.query.replace('\\', '\\\\')
 
-    if opts.rebuild:
-        mutag.rebuild(dryrun=opts.dryrun)
-        sys.exit(0)
 
     if opts.cmd == 'autotag':
         ui.print_color("autotaging new messages under #B%s#t" % mutag.maildir)
@@ -84,11 +80,11 @@ def eval_command(opts, args):
         ui.print_color("  retagging messages")
         mutag.autotag(L, dryrun=opts.dryrun)
 
-    if opts.cmd == 'expire':
+    elif opts.cmd == 'expire':
         ui.print_color("expiring old messages under #B%s#t" % mutag.maildir)
         mutag.expire(dryrun=opts.dryrun)
 
-    if opts.cmd in set(['autotag', 'expire']) and opts.index:
+    elif opts.cmd in set(['autotag', 'expire']) and opts.index:
         mutag.index(dryrun=opts.dryrun)
 
     elif opts.cmd == 'count':
@@ -130,12 +126,19 @@ def eval_command(opts, args):
         for msg in L:
             print(msg['path'])
 
+    elif opts.cmd == 'rebuild':
+        mutag.rebuild(dryrun=opts.dryrun)
+
+    elif opts.cmd == 'trash':
+        mutag.empty_trash(dryrun=opts.dryrun)
 
     # Index if asked to and not done in a specific command
-    if opts.index and not opts.cmd in ['autotag', 'tag']: mutag.index(dryrun=opts.dryrun)
+    if opts.index and not opts.cmd in ['autotag', 'tag', 'rebuild']:
+        mutag.index(dryrun=opts.dryrun)
 
     # Update mtime
-    if opts.update: mutag.update_mtime(dryrun=opts.dryrun)
+    if opts.update:
+        mutag.update_mtime(dryrun=opts.dryrun)
 
 
 
@@ -177,6 +180,13 @@ parser.add_option("-P", "--print", action="store_const", const="print", default=
 parser.add_option("-F", "--filename", action="store_const", const="filename", default=None, dest="cmd",
                   help="Print the filenames")
 
+parser.add_option("--rebuild", action="store_const", const="rebuild", default=None, dest="cmd",
+                  help="rebuilds the entire database and quits")
+
+parser.add_option("--empty-trash", action="store_const", const="trash", default=None, dest="cmd",
+                  help="empties the trash folder")
+
+
 
 
 # queries
@@ -202,9 +212,6 @@ parser.add_option("-u", "--update", action="store_true", default=False, dest="up
 
 parser.add_option("-i", "--index", action="store_true", default=False, dest="index",
                   help="Index new messages")
-
-parser.add_option("--rebuild", action="store_true", default=False, dest="rebuild",
-                  help="rebuilds the entire database and quits")
 
 
 
