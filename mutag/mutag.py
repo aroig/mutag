@@ -121,14 +121,19 @@ class Mutag(object):
         return any([os.path.exists(os.path.join(path, ".noindex")),
                    os.path.exists(os.path.join(path, ".notag"))])
 
+
+    def _get_maildir_files_rec(self, files, path):
+        for fd in os.listdir(path):
+            newpath = os.path.join(path, fd)
+            if os.path.isdir(newpath) and not self.should_ignore_path(newpath):
+                self._get_maildir_files_rec(files, newpath)
+            elif os.path.isfile(newpath) and fd[0] != '.':
+                files.append(newpath)
+
+
     def get_maildir_files(self):
         files = []
-        for fd in os.listdir(self.maildir):
-            path = os.path.join(self.maildir, fd)
-            if os.path.isdir(path) and not self.should_ignore_path(path):
-                for mp in glob.glob(os.path.join(path, '*/*')):
-                    if os.path.isfile(mp):
-                        files.append(mp)
+        self._get_maildir_files_rec(files, self.maildir)
         return files
 
 
@@ -431,6 +436,7 @@ class Mutag(object):
         L = self.get_maildir_files()
         if len(L) > 0:
             mtime = max([int(os.stat(mp).st_mtime) for mp in L])
-            if not dryrun: self.save_last_mtime(mtime)
+            if not dryrun:
+                self.save_last_mtime(mtime)
 
 # vim: expandtab:shiftwidth=4:tabstop=4:softtabstop=4:textwidth=80

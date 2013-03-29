@@ -138,6 +138,7 @@ def eval_command(opts, args):
 
     # Update mtime
     if opts.update:
+        ui.print_color("  updating last mtime")
         mutag.update_mtime(dryrun=opts.dryrun)
 
 
