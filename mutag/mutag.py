@@ -414,6 +414,9 @@ class Mutag(object):
         if not dryrun: self._mu('index', ['--maildir', self.maildir, '--autoupgrade'], catchout=False)
 
 
+    def rebuild(self, dryrun=False):
+        if not dryrun: self._mu('index', ['--rebuild', '--maildir', self.maildir, '--autoupgrade'], catchout=False)
+
 
     def update_mtime(self, dryrun=False):
         L = self.get_maildir_files()

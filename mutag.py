@@ -72,6 +72,10 @@ def eval_command(opts, args):
     if opts.query:
         opts.query = opts.query.replace('\\', '\\\\')
 
+    if opts.rebuild:
+        mutag.rebuild(dryrun=opts.dryrun)
+        sys.exit(0)
+
     if opts.cmd == 'autotag':
         ui.print_color("autotaging new messages under #B%s#t" % mutag.maildir)
         ui.print_color("  retrieving messages")
@@ -198,6 +202,9 @@ parser.add_option("-u", "--update", action="store_true", default=False, dest="up
 
 parser.add_option("-i", "--index", action="store_true", default=False, dest="index",
                   help="Index new messages")
+
+parser.add_option("--rebuild", action="store_true", default=False, dest="rebuild",
+                  help="rebuilds the entire database and quits")
 
 
 
