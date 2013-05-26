@@ -28,14 +28,15 @@ MANDIR ?= $(PREFIX)/share/man/man1
 DOCDIR ?= $(PREFIX)/share/doc/$(NAME)
 ZSHDIR ?= $(PREFIX)/share/zsh/site-functions
 BASHDIR ?= /etc/bash_completion.d
+SHEBANG ?= /usr/bin/env $(PYTHON)
 
 .PHONY: all man install clean build
 
 all: build man
 
 build:
-	ln -svf ../$(NAME).py bin/$(NAME)
-	$(PYTHON) setup.py build --executable="/usr/bin/env $(PYTHON)"
+	ln -svf "../$(NAME).py" "bin/$(NAME)"
+	$(PYTHON) setup.py build --executable="$(SHEBANG)"
 	@echo
 	@echo "Build process finished, run '$(PYTHON) setup.py install' to install" \
 		"or '$(PYTHON) setup.py --help' for more information".
@@ -51,10 +52,10 @@ man:
 	@make -C man man
 
 install:
-	$(PYTHON) setup.py install --prefix=$(DESTDIR)$(PREFIX)
-#	@install -Dm644 completion/zsh/_$(NAME) $(DESTDIR)$(ZSHDIR)/_$(NAME)
-#	@install -Dm644 completion/bash/$(NAME) $(DESTDIR)$(BASHDIR)/$(NAME)
-	@install -Dm644 man/$(NAME).1 $(DESTDIR)$(MANDIR)/$(NAME).1
-	@install -Dm644 README $(DESTDIR)$(DOCDIR)/README
-#	@cp -R docs/* $(DESTDIR)$(DOCDIR)
-	@cp -R conf $(DESTDIR)$(DOCDIR)/config
+	$(PYTHON) setup.py install --prefix="$(DESTDIR)$(PREFIX)"
+#	@install -Dm644 "completion/zsh/_$(NAME)" "$(DESTDIR)$(ZSHDIR)/_$(NAME)"
+#	@install -Dm644 "completion/bash/$(NAME)" "$(DESTDIR)$(BASHDIR)/$(NAME)"
+	@install -Dm644 "man/$(NAME).1" "$(DESTDIR)$(MANDIR)/$(NAME).1"
+	@install -Dm644 README "$(DESTDIR)$(DOCDIR)/README"
+#	@cp -R docs/* "$(DESTDIR)$(DOCDIR)"
+	@cp -R conf "$(DESTDIR)$(DOCDIR)/config"
