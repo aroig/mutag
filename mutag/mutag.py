@@ -107,7 +107,7 @@ class Mutag(object):
         try:
             rules = imp.new_module('tagrules')
             exec(rawcode, rules.__dict__)
-            return rules.TagRules()
+            return rules.TagRules(path=self.maildir)
         except Exception as err:
             ui.print_error("Exception loading tagrules %s\n%s" % (self.tagrules_path, str(err)))
             return
