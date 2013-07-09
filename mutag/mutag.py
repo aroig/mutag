@@ -327,7 +327,7 @@ class Mutag(object):
 
 
 
-    def change_tags(self, msglist, tagactions, dryrun=False):
+    def change_tags(self, msglist, tagactions, dryrun=False, silent=False):
         addtags = set()
         deltags = set()
         for ta in tagactions:
@@ -342,11 +342,12 @@ class Mutag(object):
             tags = set(msg['tags'])
             newtags = tags.union(addtags).difference(deltags)
             if tags != newtags:
-                self._print_tagschange(msg, tags, newtags)
+                if not silent: self._print_tagschange(msg, tags, newtags)
                 if not dryrun: msg.set_tags(newtags)
 
 
-    def change_flags(self, msglist, flagactions, dryrun=False):
+
+    def change_flags(self, msglist, flagactions, dryrun=False, silent=False):
         addflags = set()
         delflags = set()
         for fa in flagactions:
@@ -361,15 +362,18 @@ class Mutag(object):
             flags = set(msg['flags'])
             newflags = flags.union(addflags).difference(delflags)
             if flags != newflags:
-                self._print_tagschange(msg, flags, newflags)
+                if not silent: self._print_tagschange(msg, flags, newflags)
                 if not dryrun: msg.set_flags(newflags)
 
 
 
-    def autotag(self, msglist, dryrun=False):
+    def autotag(self, query, path=None, modified_only=True, related=True, dryrun=False, silent=False):
+        if not silent: ui.print_color("Autotaging new messages under #B%s#t" % self.maildir)
+        if not silent: ui.print_color("  retrieving messages")
+        msglist = self.query(query, path=path, modified_only=modified_only, related=related)
 
+        if not silent: ui.print_color("  retagging messages")
         tr = self._load_tagrules()
-
         tagged_count = 0
         for msg in msglist:
             if self.should_ignore_path(os.path.join(self.maildir, re.sub('^/', '', msg['maildir']))):
@@ -384,15 +388,17 @@ class Mutag(object):
             ui.print_debug("%s -> %s" % (', '.join(tags), ', '.join(newtags)))
             if tags != newtags:
                 tagged_count = tagged_count + 1
-                self._print_tagschange(msg, tags, newtags)
+                if not silent: self._print_tagschange(msg, tags, newtags)
                 if not dryrun: msg.set_tags(newtags)
 
-        ui.print_color("Processed #G%d#t files, and retagged #G%d#t." % (len(msglist), tagged_count))
+        if not silent:
+            ui.print_color("Processed #G%d#t files, and retagged #G%d#t." % (len(msglist), tagged_count))
 
 
 
-    def expire(self, dryrun=False):
+    def expire(self, dryrun=False, silent=False):
         """Marks all messages that need expiring as trashed"""
+        ui.print_color("Expiring old messages under #B%s#t" % self.maildir)
         tr = self._load_tagrules()
         expire_date = datetime.datetime.today() - datetime.timedelta(days=self.expire_days)
 
@@ -404,39 +410,46 @@ class Mutag(object):
 
             if not self.trash_tag in msg['tags'] and msg['date'] and msg['date'] < expire_date:
                 if tr.expire(msg):
-                    self._print_expired(msg)
+                    if not silent: self._print_expired(msg)
                     expired_count = expired_count + 1
                     if not dryrun: self.trash(msg)
                 else:
                     tags = msg['tags']
                     if not dryrun: msg.set_tags(tags | set([tr.noexpire_tag]))
 
-        ui.print_color("Processed #G%d#t files, and expired #G%d#t." % (len(msglist), expired_count))
+        if not silent:
+            ui.print_color("Processed #G%d#t files, and expired #G%d#t." % (len(msglist), expired_count))
 
 
 
-    def index(self, dryrun=False):
-        if not dryrun:
-            self._mu('index', ['--maildir', self.maildir, '--autoupgrade'], catchout=False)
+    def index(self, dryrun=False, silent=False):
+        args = ['--maildir', self.maildir, '--autoupgrade']
+        if silent: args.append('--quiet')
+        if not dryrun: self._mu('index', args, catchout=False)
 
 
-    def rebuild(self, dryrun=False):
-        if not dryrun:
-            self._mu('index', ['--rebuild', '--maildir', self.maildir, '--autoupgrade'], catchout=False)
+
+    def rebuild(self, dryrun=False, silent=False):
+        args = ['--rebuild', '--maildir', self.maildir, '--autoupgrade']
+        if silent: args.append('--quiet')
+        if not dryrun: self._mu('index', args, catchout=False)
 
 
-    def empty_trash(self, dryrun=False):
+
+    def empty_trash(self, dryrun=False, silent=False):
         for f in glob.glob(os.path.join(self.trash_path, '*', '*')):
-            print("deleting: %s" % f)
-            if not dryrun:
-                os.remove(f)
+            if not silent: ui.print_color("deleting: %s" % f)
+            if not dryrun: os.remove(f)
 
 
-    def update_mtime(self, dryrun=False):
+
+    def update_mtime(self, dryrun=False, silent=False):
+        if not silent: ui.print_color("  updating last mtime")
         L = self.get_maildir_files()
         if len(L) > 0:
             mtime = max([int(os.stat(mp).st_mtime) for mp in L])
             if not dryrun:
                 self.save_last_mtime(mtime)
+
 
 # vim: expandtab:shiftwidth=4:tabstop=4:softtabstop=4:textwidth=80

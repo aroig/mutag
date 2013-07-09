@@ -73,19 +73,13 @@ def eval_command(opts, args):
 
 
     if opts.cmd == 'autotag':
-        ui.print_color("autotaging new messages under #B%s#t" % mutag.maildir)
-        ui.print_color("  retrieving messages")
-        L = mutag.query(opts.query, path = opts.path,
-                        modified_only=opts.modified, related=True)
-        ui.print_color("  retagging messages")
-        mutag.autotag(L, dryrun=opts.dryrun)
+        mutag.autotag(query=opts.query, path=opts.path, modified_only=opts.modified, related=True, dryrun=opts.dryrun, silent=opts.silent)
 
     elif opts.cmd == 'expire':
-        ui.print_color("expiring old messages under #B%s#t" % mutag.maildir)
-        mutag.expire(dryrun=opts.dryrun)
+        mutag.expire(dryrun=opts.dryrun, silent=opts.silent)
 
     elif opts.cmd in set(['autotag', 'expire']) and opts.index:
-        mutag.index(dryrun=opts.dryrun)
+        mutag.index(dryrun=opts.dryrun, silent=opts.silent)
 
     elif opts.cmd == 'count':
         num = mutag.count(opts.query, modified_only=opts.modified)
@@ -99,14 +93,16 @@ def eval_command(opts, args):
     elif opts.cmd == 'tag':
         L = mutag.query(opts.query, path = opts.path,
                         modified_only=opts.modified, related=False)
-        mutag.change_tags(L, args, dryrun=opts.dryrun)
-        if opts.index and len(L) > 0: mutag.index(dryrun=opts.dryrun)
+        mutag.change_tags(L, args, dryrun=opts.dryrun, silent=opts.silent)
+        if opts.index and len(L) > 0:
+            mutag.index(dryrun=opts.dryrun, silent=opts.silent)
 
     elif opts.cmd == 'flag':
         L = mutag.query(opts.query, path = opts.path,
                         modified_only=opts.modified, related=False)
-        mutag.change_flags(L, args, dryrun=opts.dryrun)
-        if opts.index and len(L) > 0: mutag.index(dryrun=opts.dryrun)
+        mutag.change_flags(L, args, dryrun=opts.dryrun, silent=opts.silent)
+        if opts.index and len(L) > 0:
+            mutag.index(dryrun=opts.dryrun, silent=opts.silent)
 
     elif opts.cmd == 'list':
         L = mutag.query(opts.query, path = opts.path,
@@ -127,19 +123,18 @@ def eval_command(opts, args):
             print(msg['path'])
 
     elif opts.cmd == 'rebuild':
-        mutag.rebuild(dryrun=opts.dryrun)
+        mutag.rebuild(dryrun=opts.dryrun, silent=opts.silent)
 
     elif opts.cmd == 'trash':
-        mutag.empty_trash(dryrun=opts.dryrun)
+        mutag.empty_trash(dryrun=opts.dryrun, silent=opts.silent)
 
     # Index if asked to and not done in a specific command
     if opts.index and not opts.cmd in ['autotag', 'tag', 'rebuild']:
-        mutag.index(dryrun=opts.dryrun)
+        mutag.index(dryrun=opts.dryrun, silent=opts.silent)
 
     # Update mtime
     if opts.update:
-        ui.print_color("  updating last mtime")
-        mutag.update_mtime(dryrun=opts.dryrun)
+        mutag.update_mtime(dryrun=opts.dryrun, silent=opts.silent)
 
 
 
@@ -215,6 +210,8 @@ parser.add_option("-i", "--index", action="store_true", default=False, dest="ind
                   help="Index new messages")
 
 
+parser.add_option("-s", "--silent", action="store_true", default=False, dest="silent",
+                  help="Runs silently.")
 
 parser.add_option("--dryrun", action="store_true", default=False, dest="dryrun",
                   help="Performs a dry run. Does not change anything on disk.")
