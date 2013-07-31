@@ -21,6 +21,11 @@ import os
 import re
 import sys
 import pprint
+import time
+import socket
+
+from hashlib import md5
+from threading import Lock
 
 from datetime import datetime
 from email.parser import BytesParser
@@ -31,6 +36,32 @@ import email.utils
 from email import charset
 # Set the email charset to quoted printable for headers and content.
 charset.add_charset('utf-8', charset.QP, charset.QP)
+
+class MessageError(Exception):
+    def __init__(self, msg=None):
+        super().__init__(msg)
+
+
+# This serves to produce unique filenames based on a sequential time.
+# Borrowed from offlineimap
+timeseq = 0
+lasttime = 0
+timelock = Lock()
+
+def gettimeseq():
+    global lasttime, timeseq, timelock
+    timelock.acquire()
+    try:
+        thistime = int(time.time())
+        if thistime == lasttime:
+            timeseq += 1
+            return (thistime, timeseq)
+        else:
+            lasttime = thistime
+            timeseq = 0
+            return (thistime, timeseq)
+    finally:
+        timelock.release()
 
 
 class Message(dict):
@@ -242,6 +273,40 @@ class Message(dict):
                 os.unlink(self['path'])
                 self['path'] = newpath
 
+    def save_tmp_file(self, filename, content):
+        tmpname = os.path.join('tmp', filename)
+        parent = os.path.dirname(os.path.dirname(self['path']))
+        # open file and write it out
+        try:
+            fd = os.open(os.path.join(parent, tmpname),
+                         os.O_EXCL|os.O_CREAT|os.O_WRONLY, 0o666)
+        except OSError as e:
+            if e.errno == 17:
+                raise MessageError("Unique filename %s already existing." % filename)
+            else:
+                raise
+
+        file = os.fdopen(fd, 'wb')
+        file.write(content)
+
+        # Make sure the data hits the disk
+        file.flush()
+        file.close()
+
+        return tmpname
+
+
+    def new_message_filename(self, uid, maildir, flags=set()):
+        """Creates a new unique Maildir filename
+
+        :param uid: The UID`None`, or a set of maildir flags
+        :param flags: A set of maildir flags
+        :returns: String containing unique message filename"""
+        timeval, timeseq = gettimeseq()
+        return '%d_%d.%d.%s,U=%d,FMD5=%s%s2,%s' % \
+            (timeval, timeseq, os.getpid(), socket.gethostname(),
+             uid, md5(maildir.encode('utf-8')).hexdigest(), ':', ''.join(sorted(flags)))
+
 
     def set_tags(self, tags):
         """Sets tags of message"""
@@ -255,13 +320,11 @@ class Message(dict):
 
         # save changed file into temp path
         parent = os.path.dirname(os.path.dirname(self['path']))
-        tmppath = os.path.join(parent, 'tmp', os.path.basename(self['path']))
-
-        with open(tmppath, 'wb') as fd:
-            fd.write(content)
+        messagename = self.new_message_filename(int(self['docid']), self['maildir'], set())
+        tmpname = self.save_tmp_file(messagename, content)
 
         # move back to initial position
-        os.rename(tmppath, self['path'])
+        os.rename(os.path.join(parent, tmpname), self['path'])
 
         # update tags
         self['tags'] = set(tags)
