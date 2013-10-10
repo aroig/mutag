@@ -25,7 +25,7 @@ COMMANDS
 
 CONFIGURATION
 =============
-There is a configuration file in $XDG_CONFIG/paur/config.
+There is a configuration file in $XDG_CONFIG/mutag/mutag.conf
 
 
 KNOWN BUGS
