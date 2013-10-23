@@ -25,7 +25,7 @@ from optparse import OptionParser, OptionGroup
 from configparser import RawConfigParser
 
 import mutag.archui as ui
-from mutag.mutag import Mutag
+from mutag.mutag import Mutag, MutagError
 from mutag import __version__
 
 
@@ -239,6 +239,10 @@ if opts.version:
 
 try:
     eval_command(opts, args)
+
+except MutagError as err:
+    ui.print_error(str(err))
+    sys.exit(1)
 
 except KeyboardInterrupt:
     print("")

@@ -34,7 +34,11 @@ import mutag.archui as ui
 
 class MutagError(Exception):
     def __init__(self, msg=None):
-        super().__init__(msg)
+        super(MutagError, self).__init__(msg)
+
+class MuError(MutagError):
+    def __init__(self, msg=None):
+        super(MuError, self).__init__(msg)
 
 
 class Mutag(object):
@@ -63,9 +67,11 @@ class Mutag(object):
         with open('/dev/null', 'w') as devnull:
             if silent: out = devnull
             else:      out = None
+
             cmd_args = [mu_cmd, cmd, '--muhome', self.muhome] + args
+
             if catchout:
-                ret = subprocess.check_output(cmd_args, stderr=out)
+                ret = subprocess.check_output(cmd_args, stderr=subprocess.STDOUT)
                 return ret.decode('utf-8')
             else:
                 subprocess.check_call(cmd_args, stdout=out, stderr=out)
@@ -229,14 +235,12 @@ class Mutag(object):
         try:
             sexpdata = self._mu('find', args, silent=True, catchout=True)
             L = self._parse_msgsexp(sexpdata)
+            return L
+
         except subprocess.CalledProcessError as err:
-            if err.returncode == 4:   # No results
-                L = []
-            else:
-                raise
-
-        return L
-
+            if err.returncode == 4:  return []  # no results
+            elif err.output:         raise MuError(str(err.output.decode('utf-8')))
+            else:                    raise MuError(str(err))
 
 
     def collect_thread_data(self, msglist):
@@ -323,7 +327,11 @@ class Mutag(object):
         if modified_only: mtime = self.get_last_mtime()
         else:             mtime = None
 
-        return len(self.query_mu(query, mtime, related=False))
+        try:
+            return len(self.query_mu(query, mtime, related=False))
+
+        except MuError:
+            return 0
 
 
 
@@ -425,14 +433,24 @@ class Mutag(object):
     def index(self, dryrun=False, silent=False):
         args = ['--maildir', self.maildir, '--autoupgrade']
         if silent: args.append('--quiet')
-        if not dryrun: self._mu('index', args, catchout=False)
+        try:
+            if not dryrun: self._mu('index', args, catchout=True)
+
+        except subprocess.CalledProcessError as err:
+            if err.output:  raise MuError(str(err.output.decode('utf-8')))
+            else:           raise MuError(str(err))
 
 
 
     def rebuild(self, dryrun=False, silent=False):
         args = ['--rebuild', '--maildir', self.maildir, '--autoupgrade']
         if silent: args.append('--quiet')
-        if not dryrun: self._mu('index', args, catchout=False)
+        try:
+            if not dryrun: self._mu('index', args, catchout=False)
+
+        except subprocess.CalledProcessError as err:
+            if err.output:  raise MuError(str(err.output.decode('utf-8')))
+            else:           raise MuError(str(err))
 
 
 
