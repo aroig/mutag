@@ -56,6 +56,7 @@ class Mutag(object):
 
         self.tagrules_path = prof['tagrules']
         self.lastmtime_path = prof['lastmtime']
+        self.mtimelist_path = prof['mtimelist']
 
 
 
@@ -168,10 +169,6 @@ class Mutag(object):
             mtime = 0
         return mtime
 
-
-    def save_last_mtime(self, mtime):
-        with open(self.lastmtime_path, 'w') as fd:
-            fd.write(str(mtime))
 
 
     def parsefiles(self, filelist):
@@ -484,7 +481,24 @@ class Mutag(object):
         if len(L) > 0:
             mtime = max([int(os.stat(mp).st_mtime) for mp in L])
             if not dryrun:
-                self.save_last_mtime(mtime)
+                with open(self.lastmtime_path, 'w') as fd:
+                    fd.write(str(mtime))
+
+
+
+    def save_mtime_list(self, dryrun=False, silent=False):
+        if not silent: ui.print_color("  updating mtime list")
+        L = self.get_maildir_files()
+        if len(L) > 0:
+            with open(self.mtimelist_path, 'w') as fd:
+                maxmt = 0
+                for mp in sorted(L):
+                    mt = int(os.stat(mp).st_mtime)
+                    if mt > maxmt: maxmt = mt
+                    fd.write("%d: %s\n" % (mt, mp))
+
+            with open(self.lastmtime_path, 'w') as fd:
+                fd.write(str(mtime))
 
 
 

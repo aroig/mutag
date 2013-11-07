@@ -46,6 +46,7 @@ def get_profile(conf, opts):
 
     prof['expiredays'] = int(conf.get('profile %s' % name, 'expiredays'))
 
+    prof['mtimelist'] = os.path.expanduser(conf.get('profile %s' % name, 'mtimelist'))
     prof['lastmtime'] = os.path.expanduser(conf.get('profile %s' % name, 'lastmtime'))
     prof['tagrules'] = os.path.expanduser(conf.get('profile %s' % name, 'tagrules'))
 
@@ -134,7 +135,7 @@ def eval_command(opts, args):
 
     # Update mtime
     if opts.update:
-        mutag.update_mtime(dryrun=opts.dryrun, silent=opts.silent)
+        mutag.save_mtime_list(dryrun=opts.dryrun, silent=opts.silent)
 
     # commit mail
     if opts.commit:
