@@ -77,6 +77,23 @@ class Mutag(object):
                 subprocess.check_call(cmd_args, stdout=out, stderr=out)
 
 
+
+    def _git(self, args, tgtdir=None, catchout=False, silent=False):
+        git_cmd = 'git'
+        with open('/dev/null', 'w') as devnull:
+            if silent: out = devnull
+            else:      out = None
+
+            cmd_args = [git_cmd] + args
+
+            if catchout:
+                ret = subprocess.check_output(cmd_args, stderr=subprocess.STDOUT, cwd=tgtdir)
+                return ret.decode('utf-8')
+            else:
+                subprocess.check_call(cmd_args, stdout=out, stderr=out, cwd=tgtdir)
+
+
+
     def _parse_msgsexp(self, sexpstr):
         data = plistseq.parse(sexpstr)
         L = []
@@ -468,6 +485,21 @@ class Mutag(object):
             mtime = max([int(os.stat(mp).st_mtime) for mp in L])
             if not dryrun:
                 self.save_last_mtime(mtime)
+
+
+
+    def commit(self, dryrun=False, silent=False):
+        if not silent: ui.print_color("  commiting files in %s" % self.maildir)
+        cmt_msg = "mutag autocommit"
+
+        if not dryrun and os.path.exists(os.path.join(self.maildir, '.git')):
+            try:
+                self._git('add -A .', tgtdir=self.maildir, catchout=False)
+                self._git('commit -m "%s"' % cmt_msg, tgtdir=self.maildir, catchout=False)
+
+            except subprocess.CalledProcessError as err:
+                if err.output:  raise MuError(str(err.output.decode('utf-8')))
+                else:           raise MuError(str(err))
 
 
 # vim: expandtab:shiftwidth=4:tabstop=4:softtabstop=4:textwidth=80

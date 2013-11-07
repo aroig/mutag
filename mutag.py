@@ -136,6 +136,9 @@ def eval_command(opts, args):
     if opts.update:
         mutag.update_mtime(dryrun=opts.dryrun, silent=opts.silent)
 
+    # commit mail
+    if opts.commit:
+        mutag.commit(dryrun=opts.dryrun, silent=opts.silent)
 
 
 
@@ -208,6 +211,9 @@ parser.add_option("-u", "--update", action="store_true", default=False, dest="up
 
 parser.add_option("-i", "--index", action="store_true", default=False, dest="index",
                   help="Index new messages")
+
+parser.add_option("-c", "--commit", action="store_true", default=False, dest="commit",
+                  help="Commit mail if stored in a git repo")
 
 
 parser.add_option("-s", "--silent", action="store_true", default=False, dest="silent",
