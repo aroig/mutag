@@ -526,8 +526,8 @@ class Mutag(object):
 
         if not dryrun and os.path.exists(os.path.join(self.maildir, '.git')):
             try:
-                self._git(['add', '-A', '.'], tgtdir=self.maildir, catchout=False)
-                self._git(['commit', '-m', cmt_msg], tgtdir=self.maildir, catchout=False)
+                self._git(['add', '-A', '.'], tgtdir=self.maildir, catchout=False, silent=True)
+                self._git(['commit', '-m', cmt_msg], tgtdir=self.maildir, catchout=False, silent=True)
 
             except subprocess.CalledProcessError as err:
                 if err.output:  raise MuError(str(err.output.decode('utf-8')))
