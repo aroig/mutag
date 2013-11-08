@@ -447,6 +447,7 @@ class Mutag(object):
     def index(self, dryrun=False, silent=False):
         args = ['--maildir', self.maildir, '--autoupgrade']
         if silent: args.append('--quiet')
+        if not silent: ui.print_color("  indexing new messages")
         try:
             if not dryrun: self._mu('index', args, catchout=True)
 
