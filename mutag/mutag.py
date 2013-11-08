@@ -496,10 +496,13 @@ class Mutag(object):
                     mt = int(os.stat(mp).st_mtime)
                     if mt > maxmt: maxmt = mt
                     fd.write("%d: %s\n" % (mt, os.path.relpath(mp, self.maildir)))
+                fd.flush()
+                fd.close()
 
             with open(self.lastmtime_path, 'w') as fd:
                 fd.write(str(maxmt))
-
+                fd.flush()
+                fd.close()
 
 
     def recover_mtimes(self, dryrun=False, silent=False):
@@ -522,8 +525,8 @@ class Mutag(object):
 
         if not dryrun and os.path.exists(os.path.join(self.maildir, '.git')):
             try:
-                self._git('add -A .', tgtdir=self.maildir, catchout=False)
-                self._git('commit -m "%s"' % cmt_msg, tgtdir=self.maildir, catchout=False)
+                self._git(['add', '-A', '.'], tgtdir=self.maildir, catchout=False)
+                self._git(['commit', '-m', cmt_msg], tgtdir=self.maildir, catchout=False)
 
             except subprocess.CalledProcessError as err:
                 if err.output:  raise MuError(str(err.output.decode('utf-8')))
