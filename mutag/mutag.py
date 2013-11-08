@@ -494,26 +494,26 @@ class Mutag(object):
             with open(self.mtimelist_path, 'w') as fd:
                 maxmt = 0
                 for mp in sorted(L):
-                    mt = int(os.stat(mp).st_mtime)
+                    mt = os.stat(mp).st_mtime
                     if mt > maxmt: maxmt = mt
-                    fd.write("%d: %s\n" % (mt, os.path.relpath(mp, self.maildir)))
+                    fd.write("%f: %s\n" % (mt, os.path.relpath(mp, self.maildir)))
                 fd.flush()
                 fd.close()
 
             with open(self.lastmtime_path, 'w') as fd:
-                fd.write(str(maxmt))
+                fd.write(str(int(maxmt)))
                 fd.flush()
                 fd.close()
 
 
     def recover_mtimes(self, dryrun=False, silent=False):
         if not silent: ui.print_color("  recovering file mtimes")
-        line_re = re.compile("^([0-9]+):\s*(.*)$")
+        line_re = re.compile("^([0-9.]+):\s*(.*)$")
 
         with open(self.mtimelist_path, 'r') as fd:
             for line in fd:
                 m = line_re.match(line)
-                mt = int(m.group(1))
+                mt = float(m.group(1))
                 path = os.path.join(self.maildir, m.group(2))
                 if os.path.exists(path):
                     os.utime(path, (mt, mt))
