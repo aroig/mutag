@@ -522,7 +522,7 @@ class Mutag(object):
 
     def commit(self, dryrun=False, silent=False):
         if not silent: ui.print_color("  commiting files in %s" % self.maildir)
-        cmt_msg = "mutag autocommit"
+        cmt_msg = "mutag auto-commit"
 
         if not dryrun and os.path.exists(os.path.join(self.maildir, '.git')):
             try:
