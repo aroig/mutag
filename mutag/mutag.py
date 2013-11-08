@@ -506,6 +506,7 @@ class Mutag(object):
                 fd.close()
 
 
+
     def recover_mtimes(self, dryrun=False, silent=False):
         if not silent: ui.print_color("  recovering file mtimes")
         line_re = re.compile("^([0-9.]+):\s*(.*)$")
@@ -521,13 +522,22 @@ class Mutag(object):
 
 
     def commit(self, dryrun=False, silent=False):
-        if not silent: ui.print_color("  commiting files in %s" % self.maildir)
         cmt_msg = "mutag auto-commit"
 
         if not dryrun and os.path.exists(os.path.join(self.maildir, '.git')):
             try:
-                self._git(['add', '-A', '.'], tgtdir=self.maildir, catchout=False, silent=True)
-                self._git(['commit', '-m', cmt_msg], tgtdir=self.maildir, catchout=False, silent=True)
+                # detect if there are changes on working dir
+                raw = self._git(['status', '--porcelain'], tgtdir=self.maildir,
+                                catchout=True, silent=True)
+
+                # commit only if there are changes
+                if len(raw.strip()) > 0:
+                    if not silent: ui.print_color("  commiting files in %s" % self.maildir)
+                    self._git(['add', '-A', '.'], tgtdir=self.maildir, catchout=False, silent=True)
+                    self._git(['commit', '-m', cmt_msg], tgtdir=self.maildir, catchout=False, silent=True)
+
+                else:
+                    if not silent: ui.print_color("  working dir is clean")
 
             except subprocess.CalledProcessError as err:
                 if err.output:  raise MuError(str(err.output.decode('utf-8')))
