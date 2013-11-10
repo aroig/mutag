@@ -523,6 +523,11 @@ class Mutag(object):
                         ui.print_debug("set mtime %f. %s" % (mt, m.group(2)))
                         if not dryrun: os.utime(path, (mt, mt))
 
+        # update git index
+        if not silent: ui.print_color("  updating git index")
+        if not dryrun:self._git(['update-index', '-q', '--refresh'], tgtdir=self.maildir,
+                                catchout=False, silent=True)
+
 
 
     def commit(self, dryrun=False, silent=False):
