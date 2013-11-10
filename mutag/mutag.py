@@ -45,6 +45,7 @@ class Mutag(object):
     def __init__(self, prof):
         self.muhome = prof['muhome']
         self.maildir = prof['maildir']
+        self.under_git = os.path.exists(os.path.join(self.maildir, '.git'))
 
         self.trash_tag = prof['trashtag'].strip()
         if len(self.trash_tag) == 0: self.trash_tag = None
@@ -524,33 +525,38 @@ class Mutag(object):
                         if not dryrun: os.utime(path, (mt, mt))
 
         # update git index
-        if not silent: ui.print_color("  updating git index")
-        if not dryrun:self._git(['update-index', '-q', '--refresh'], tgtdir=self.maildir,
-                                catchout=False, silent=True)
+        if self.under_git:
+            if not silent: ui.print_color("  updating git index")
+            if not dryrun:self._git(['update-index', '-q', '--refresh'], tgtdir=self.maildir,
+                                    catchout=False, silent=True)
 
 
 
     def commit(self, dryrun=False, silent=False):
         cmt_msg = "mutag auto-commit"
 
-        if not dryrun and os.path.exists(os.path.join(self.maildir, '.git')):
-            try:
-                # detect if there are changes on working dir
-                raw = self._git(['status', '--porcelain'], tgtdir=self.maildir,
-                                catchout=True, silent=True)
+        if not self.under_git:
+            ui.print_error("maildir %s not under git version control" % self.maildir)
+            return
 
-                # commit only if there are changes
-                if len(raw.strip()) > 0:
-                    if not silent: ui.print_color("  commiting files in %s" % self.maildir)
+        try:
+            # detect if there are changes on working dir
+            raw = self._git(['status', '--porcelain'], tgtdir=self.maildir,
+                            catchout=True, silent=True)
+
+            # commit only if there are changes
+            if len(raw.strip()) > 0:
+                if not silent: ui.print_color("  commiting files in %s" % self.maildir)
+                if not dryrun:
                     self._git(['add', '-A', '.'], tgtdir=self.maildir, catchout=False, silent=True)
                     self._git(['commit', '-m', cmt_msg], tgtdir=self.maildir, catchout=False, silent=True)
 
-                else:
-                    if not silent: ui.print_color("  working dir is clean")
+            else:
+                if not silent: ui.print_color("  working dir is clean")
 
-            except subprocess.CalledProcessError as err:
-                if err.output:  raise MuError(str(err.output.decode('utf-8')))
-                else:           raise MuError(str(err))
+        except subprocess.CalledProcessError as err:
+            if err.output:  raise MuError(str(err.output.decode('utf-8')))
+            else:           raise MuError(str(err))
 
 
 # vim: expandtab:shiftwidth=4:tabstop=4:softtabstop=4:textwidth=80
