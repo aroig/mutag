@@ -516,8 +516,12 @@ class Mutag(object):
                 m = line_re.match(line)
                 mt = float(m.group(1))
                 path = os.path.join(self.maildir, m.group(2))
+
                 if os.path.exists(path):
-                    os.utime(path, (mt, mt))
+                    cmt = os.stat(path).st_mtime
+                    if cmt != mt:
+                        ui.print_debug("set mtime %f. %s" % (mt, m.group(2)))
+                        if not dryrun: os.utime(path, (mt, mt))
 
 
 
