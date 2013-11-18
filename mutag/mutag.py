@@ -391,11 +391,11 @@ class Mutag(object):
 
 
     def autotag(self, query, path=None, modified_only=True, related=True, dryrun=False, silent=False):
-        if not silent: ui.print_color("Autotaging new messages under #B%s#t" % self.maildir)
-        if not silent: ui.print_color("  retrieving messages")
+        ui.print_color("Autotaging new messages under #B%s#t" % self.maildir)
+        ui.print_color("  retrieving messages")
         msglist = self.query(query, path=path, modified_only=modified_only, related=related)
 
-        if not silent: ui.print_color("  retagging messages")
+        ui.print_color("  retagging messages")
         tr = self._load_tagrules()
         tagged_count = 0
         for msg in msglist:
@@ -414,8 +414,7 @@ class Mutag(object):
                 if not silent: self._print_tagschange(msg, tags, newtags)
                 if not dryrun: msg.set_tags(newtags)
 
-        if not silent:
-            ui.print_color("Processed #G%d#t files, and retagged #G%d#t." % (len(msglist), tagged_count))
+        ui.print_color("Processed #G%d#t files, and retagged #G%d#t." % (len(msglist), tagged_count))
 
 
 
@@ -440,15 +439,14 @@ class Mutag(object):
                     tags = msg['tags']
                     if not dryrun: msg.set_tags(tags | set([tr.noexpire_tag]))
 
-        if not silent:
-            ui.print_color("Processed #G%d#t files, and expired #G%d#t." % (len(msglist), expired_count))
+        ui.print_color("Processed #G%d#t files, and expired #G%d#t." % (len(msglist), expired_count))
 
 
 
     def index(self, dryrun=False, silent=False):
         args = ['--maildir', self.maildir, '--autoupgrade']
         if silent: args.append('--quiet')
-        if not silent: ui.print_color("  indexing new messages")
+        ui.print_color("  indexing new messages")
         try:
             if not dryrun: self._mu('index', args, catchout=True)
 
@@ -460,6 +458,7 @@ class Mutag(object):
 
     def rebuild(self, dryrun=False, silent=False):
         args = ['--rebuild', '--maildir', self.maildir, '--autoupgrade']
+        ui.print_color("  rebuilding index")
         if silent: args.append('--quiet')
         try:
             if not dryrun: self._mu('index', args, catchout=False)
@@ -471,6 +470,7 @@ class Mutag(object):
 
 
     def empty_trash(self, dryrun=False, silent=False):
+        ui.print_color("Deleting messages in #B%s#t" % self.trash_path)
         for f in glob.glob(os.path.join(self.trash_path, '*', '*')):
             if not silent: ui.print_color("deleting: %s" % f)
             if not dryrun: os.remove(f)
@@ -478,7 +478,7 @@ class Mutag(object):
 
 
     def update_mtime(self, dryrun=False, silent=False):
-        if not silent: ui.print_color("  updating last mtime")
+        ui.print_color("  updating last mtime")
         L = self.get_maildir_files()
         if len(L) > 0:
             mtime = max([int(os.stat(mp).st_mtime) for mp in L])
@@ -489,7 +489,7 @@ class Mutag(object):
 
 
     def save_mtimes(self, dryrun=False, silent=False):
-        if not silent: ui.print_color("  updating mtime list")
+        ui.print_color("  updating mtime list")
         L = self.get_maildir_files()
         if len(L) > 0:
             with open(self.mtimelist_path, 'w') as fd:
@@ -509,7 +509,7 @@ class Mutag(object):
 
 
     def recover_mtimes(self, dryrun=False, silent=False):
-        if not silent: ui.print_color("  recovering file mtimes")
+        ui.print_color("  recovering file mtimes")
         line_re = re.compile("^([0-9.]+):\s*(.*)$")
 
         with open(self.mtimelist_path, 'r') as fd:
@@ -546,13 +546,13 @@ class Mutag(object):
 
             # commit only if there are changes
             if len(raw.strip()) > 0:
-                if not silent: ui.print_color("  commiting files in %s" % self.maildir)
+                ui.print_color("  commiting files in %s" % self.maildir)
                 if not dryrun:
                     self._git(['add', '-A', '.'], tgtdir=self.maildir, catchout=False, silent=True)
                     self._git(['commit', '-m', cmt_msg], tgtdir=self.maildir, catchout=False, silent=True)
 
             else:
-                if not silent: ui.print_color("  working dir is clean")
+                ui.print_color("  working dir is clean")
 
         except subprocess.CalledProcessError as err:
             if err.output:  raise MuError(str(err.output.decode('utf-8')))
