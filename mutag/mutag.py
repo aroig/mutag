@@ -481,54 +481,10 @@ class Mutag(object):
         ui.print_color("  updating last mtime")
         L = self.get_maildir_files()
         if len(L) > 0:
-            mtime = max([int(os.stat(mp).st_mtime) for mp in L])
+            mtime = max([float(os.stat(mp).st_mtime) for mp in L])
             if not dryrun:
                 with open(self.lastmtime_path, 'w') as fd:
                     fd.write(str(mtime))
-
-
-
-    def save_mtimes(self, dryrun=False, silent=False):
-        ui.print_color("  updating mtime list")
-        L = self.get_maildir_files()
-        if len(L) > 0:
-            with open(self.mtimelist_path, 'w') as fd:
-                maxmt = 0
-                for mp in sorted(L):
-                    mt = os.stat(mp).st_mtime
-                    if mt > maxmt: maxmt = mt
-                    fd.write("%f: %s\n" % (mt, os.path.relpath(mp, self.maildir)))
-                fd.flush()
-                fd.close()
-
-            with open(self.lastmtime_path, 'w') as fd:
-                fd.write(str(int(maxmt)))
-                fd.flush()
-                fd.close()
-
-
-
-    def recover_mtimes(self, dryrun=False, silent=False):
-        ui.print_color("  recovering file mtimes")
-        line_re = re.compile("^([0-9.]+):\s*(.*)$")
-
-        with open(self.mtimelist_path, 'r') as fd:
-            for line in fd:
-                m = line_re.match(line)
-                mt = float(m.group(1))
-                path = os.path.join(self.maildir, m.group(2))
-
-                if os.path.exists(path):
-                    cmt = os.stat(path).st_mtime
-                    if cmt != mt:
-                        ui.print_debug("set mtime %f. %s" % (mt, m.group(2)))
-                        if not dryrun: os.utime(path, (mt, mt))
-
-        # update git index
-        if self.under_git:
-            if not silent: ui.print_color("  updating git index")
-            if not dryrun:self._git(['update-index', '-q', '--refresh'], tgtdir=self.maildir,
-                                    catchout=False, silent=True)
 
 
 

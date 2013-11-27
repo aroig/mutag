@@ -72,11 +72,6 @@ def eval_command(opts, args):
     if opts.query:
         opts.query = opts.query.replace('\\', '\\\\')
 
-    # Recover mtimes
-    if opts.recover:
-        mutag.recover_mtimes(dryrun=opts.dryrun, silent=opts.silent)
-
-
     if opts.cmd == 'autotag':
         mutag.autotag(query=opts.query, path=opts.path, modified_only=opts.modified, related=True, dryrun=opts.dryrun, silent=opts.silent)
 
@@ -139,7 +134,7 @@ def eval_command(opts, args):
 
     # Update mtime
     if opts.update:
-        mutag.save_mtimes(dryrun=opts.dryrun, silent=opts.silent)
+        mutag.update_mtime(dryrun=opts.dryrun, silent=opts.silent)
 
     # commit mail
     if opts.commit:
@@ -213,9 +208,6 @@ parser.add_option("-f", "--format", action="store", type="string", default='comp
 
 parser.add_option("-u", "--update", action="store_true", default=False, dest="update",
                   help="Update list of modification times for the files.")
-
-parser.add_option("-r", "--recover", action="store_true", default=False, dest="recover",
-                  help="Recover modification times from the saved list.")
 
 parser.add_option("-i", "--index", action="store_true", default=False, dest="index",
                   help="Index new messages")
