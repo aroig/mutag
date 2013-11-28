@@ -165,7 +165,7 @@ class Mutag(object):
     def get_last_mtime(self):
         try:
             with open(self.lastmtime_path, 'r') as fd:
-                mtime = int(fd.read())
+                mtime = float(fd.read())
         except OSError:
             mtime = 0
         return mtime
@@ -193,7 +193,7 @@ class Mutag(object):
     def modified(self, mtime):
         L = []
         for mp in self.get_maildir_files():
-            mt = int(os.stat(mp).st_mtime)
+            mt = float(os.stat(mp).st_mtime)
             if mt > mtime:
                 msg = Message()
                 msg.from_file(mp, maildir=self.maildir)
