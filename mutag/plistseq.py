@@ -44,6 +44,11 @@ plist    = Group(LPAR + ZeroOrMore(Group(pkey + pvalue)) + RPAR).setParseAction(
 plistseq = ZeroOrMore(plist)
 
 
-def parse(raw):
+def parse_seq(raw):
     pls = plistseq.parseString(raw)
     return pls.asList()
+
+
+def parse_plist(raw):
+    pls = plist.parseString(raw)
+    return pls.asList()[0]

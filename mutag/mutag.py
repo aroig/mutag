@@ -80,6 +80,15 @@ class Mutag(object):
 
 
 
+    def _mu_stream(self, cmd, args):
+        mu_cmd = 'mu'
+        cmd_args = [mu_cmd, cmd, '--muhome', self.muhome] + args
+
+        proc = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, universal_newlines=True)
+        return proc.stdout
+
+
+
     def _git(self, args, tgtdir=None, catchout=False, silent=False):
         git_cmd = 'git'
         with open('/dev/null', 'w') as devnull:
@@ -94,16 +103,6 @@ class Mutag(object):
             else:
                 subprocess.check_call(cmd_args, stdout=out, stderr=out, cwd=tgtdir)
 
-
-
-    def _parse_msgsexp(self, sexpstr):
-        data = plistseq.parse(sexpstr)
-        L = []
-        for d in data:
-            msg = Message()
-            msg.from_mudict(d)
-            L.append(msg)
-        return L
 
 
     def _print_tagschange(self, msg, oldtags, newtags):
@@ -173,7 +172,6 @@ class Mutag(object):
 
 
     def parsefiles(self, filelist):
-        L = []
         for path in filelist:
             path = os.path.abspath(os.path.expanduser(path))
             if os.path.isfile(path):
@@ -182,12 +180,12 @@ class Mutag(object):
                 if os.path.commonprefix([rpath, rmaildir]) == rmaildir:
                     msg = Message()
                     msg.from_file(path, maildir=self.maildir)
-                    L.append(msg)
+                    yield msg
                 else:
                     ui.print_error("File does not belong to the configured maildir:\n%s" % path)
             else:
                 ui.print_error("File does not exist:\n%s" % path)
-        return L
+
 
 
     def modified(self, mtime):
@@ -238,24 +236,34 @@ class Mutag(object):
     # Mu database
     # ----------------------------------------------
 
-    def query_mu(self, query=None, mtime=None, related=False):
-        args = ['--threads', '--format=sexp']
+    def query_mu(self, query=None, mtime=None, related=False, thread=False):
+        args = ['--format=sexp']
+        if thread:      args.append('--threads')
+        if related:     args.append('--include-related')
+        if mtime:       args.append('--after=%d' % int(mtime))
+        if query:       args.extend(shlex.split(query))
+        else:           args.append("")
 
-        if related: args.append('--include-related')
-        if mtime:   args.append('--after=%d' % int(mtime))
-        if query:   args.extend(shlex.split(query))
-        else:       args.append("")
+        cmd = 'find'
 
-        # parse sexp
         try:
-            sexpdata = self._mu('find', args, silent=True, catchout=True)
-            L = self._parse_msgsexp(sexpdata)
-            return L
+            stream = self._mu_stream(cmd, args)
 
         except subprocess.CalledProcessError as err:
-            if err.returncode == 4:  return []  # no results
+            if err.returncode == 4:  return  # no results
             elif err.output:         raise MuError(str(err.output.decode('utf-8')))
             else:                    raise MuError(str(err))
+
+        L = []
+        for line in stream:
+            L.append(line)
+            if line == ')\n':
+                sexp = plistseq.parse_plist('\n'.join(L))
+                L = []
+                msg = Message()
+                msg.from_mudict(sexp)
+                yield msg
+
 
 
     def collect_thread_data(self, msglist):
@@ -266,7 +274,6 @@ class Mutag(object):
             child = None     # dict of children
 
         threads = Node()
-
         # populate a tree rooted on threads node
         for msg in msglist:
             if 'thread' in msg:
@@ -322,19 +329,19 @@ class Mutag(object):
     # Interface
     # ----------------------------------------------
 
-    def query(self, query=None, path=None, modified_only=False, related=False):
+    def query(self, query=None, path=None, modified_only=False, related=False, thread=False):
 
         if path:
-            L = self.parsefiles([path])
+            for it in self.parsefiles([path]):
+                yield it
+
         else:
             if modified_only: mtime = self.get_last_mtime()
             else:             mtime = None
 
-            L = self.query_mu(query, mtime, related=related)
-
-            # Fills in thread related data
-            self.collect_thread_data(L)
-        return L
+            qit = self.query_mu(query, mtime, related=related, thread=thread)
+            for it in qit:
+                yield it
 
 
 
@@ -393,12 +400,16 @@ class Mutag(object):
     def autotag(self, query, path=None, modified_only=True, related=True, dryrun=False, silent=False):
         ui.print_color("Autotaging new messages under #B%s#t" % self.maildir)
         ui.print_color("  retrieving messages")
-        msglist = self.query(query, path=path, modified_only=modified_only, related=related)
+        msglist = self.query(query, path=path, modified_only=modified_only, related=related, thread=True)
+        L = list(msglist)
+
+        ui.print_color("  collecting thread data")
+        self.collect_thread_data(L)
 
         ui.print_color("  retagging messages")
         tr = self._load_tagrules()
         tagged_count = 0
-        for msg in msglist:
+        for msg in L:
             if self.should_ignore_path(os.path.join(self.maildir, re.sub('^/', '', msg['maildir']))):
                 continue
 
@@ -414,7 +425,7 @@ class Mutag(object):
                 if not silent: self._print_tagschange(msg, tags, newtags)
                 if not dryrun: msg.set_tags(newtags)
 
-        ui.print_color("Processed #G%d#t files, and retagged #G%d#t." % (len(msglist), tagged_count))
+        ui.print_color("Processed #G%d#t files, and retagged #G%d#t." % (len(L), tagged_count))
 
 
 

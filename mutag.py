@@ -94,14 +94,14 @@ def eval_command(opts, args):
         L = mutag.query(opts.query, path = opts.path,
                         modified_only=opts.modified, related=False)
         mutag.change_tags(L, args, dryrun=opts.dryrun, silent=opts.silent)
-        if opts.index and len(L) > 0:
+        if opts.index:
             mutag.index(dryrun=opts.dryrun, silent=opts.silent)
 
     elif opts.cmd == 'flag':
         L = mutag.query(opts.query, path = opts.path,
                         modified_only=opts.modified, related=False)
         mutag.change_flags(L, args, dryrun=opts.dryrun, silent=opts.silent)
-        if opts.index and len(L) > 0:
+        if opts.index:
             mutag.index(dryrun=opts.dryrun, silent=opts.silent)
 
     elif opts.cmd == 'list':
