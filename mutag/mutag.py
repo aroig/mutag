@@ -84,7 +84,8 @@ class Mutag(object):
         mu_cmd = 'mu'
         cmd_args = [mu_cmd, cmd, '--muhome', self.muhome] + args
 
-        proc = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, universal_newlines=True)
+        proc = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                universal_newlines=True)
         return proc.stdout
 
 
