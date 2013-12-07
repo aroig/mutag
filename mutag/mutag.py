@@ -350,7 +350,7 @@ class Mutag(object):
         else:             mtime = None
 
         try:
-            return len(self.query_mu(query, mtime, related=False))
+            return len(list(self.query_mu(query, mtime, related=False)))
 
         except MuError:
             return 0
