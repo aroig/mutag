@@ -152,8 +152,10 @@ class Message(dict):
             else:      msg[k] = set([])
 
         msg['size'] = int(d['size'])
-        if 'date' in d: msg['date'] = datetime.fromtimestamp(int(d['date'][0])*0xFFFF + int(d['date'][1]))
-        else:           msg['date'] = None
+        if 'date' in d:
+            msg['date'] = datetime.fromtimestamp(int(d['date'][0])*0x10000 + int(d['date'][1]))
+        else:
+            msg['date'] = None
 
         if 'thread' in d:
             msg['thread'] = tuple(d['thread']['path'].split(':'))
@@ -179,6 +181,7 @@ class Message(dict):
         # TODO: should I remove < > from message-id ?
         msg['message-id'] = self.get_header('message-id')
         msg['subject'] = self.get_header('subject')
+
         datetup = email.utils.parsedate_tz(self.get_header('date'))
         if datetup:
             # TODO: implement proper handling of timezones!
