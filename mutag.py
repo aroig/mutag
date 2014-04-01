@@ -138,6 +138,11 @@ def eval_command(opts, args):
         for msg in L:
             ui.print_color(msg.tostring(fmt=opts.format))
 
+    elif opts.cmd == 'queue':
+        L = mutag.queue()
+        for msg in L:
+            ui.print_color(msg.tostring(fmt=opts.format))
+
     elif opts.cmd == 'print':
         L = mutag.query(opts.query, path = opts.path,
                         modified_only=opts.modified, related=False)
@@ -200,6 +205,9 @@ parser.add_option("-G", "--flag", action="store_const", const="flag", default=No
 
 parser.add_option("-L", "--list", action="store_const", const="list", default=None, dest="cmd",
                   help="List messages")
+
+parser.add_option("-Q", "--queue", action="store_const", const="queue", default=None, dest="cmd",
+                  help="List messages in the outbound queue")
 
 parser.add_option("-P", "--print", action="store_const", const="print", default=None, dest="cmd",
                   help="Print raw messages")
