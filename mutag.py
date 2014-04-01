@@ -141,7 +141,7 @@ def eval_command(opts, args):
     elif opts.cmd == 'queue':
         L = mutag.queue()
         for msg in L:
-            ui.print_color(msg.tostring(fmt=opts.format))
+            ui.print_color(msg.tostring(fmt=opts.format, outbound=True))
 
     elif opts.cmd == 'print':
         L = mutag.query(opts.query, path = opts.path,

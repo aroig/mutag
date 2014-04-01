@@ -78,14 +78,24 @@ class Message(dict):
         self.tagsheader = 'X-Keywords'
 
 
-    def tostring(self, fmt='compact'):
+    def tostring(self, fmt='compact', outbound=False):
         if fmt == 'compact':
-            if len(self['from']) > 0:
+            if not outbound and len(self['from']) > 0:
                 author = '%s <%s>' % (self['from'][0]['name'], self['from'][0]['email'])
+            elif outbound and len(self['to']) == 1:
+                author = '%s <%s>' % (self['to'][0]['name'], self['to'][0]['email'])
+            elif outbound and len(self['to']) > 1:
+                author = '%s <%s>...' % (self['to'][0]['name'], self['to'][0]['email'])
             else:
                 author = ' <none> '
-            tagstr = '#W, '.join(sorted(['#Y%s' % t for t in self['tags']]))
+
+            if len(self['tags']) > 0:
+                tagstr = '#W, '.join(sorted(['#Y%s' % t for t in self['tags']]))
+            else:
+                tagstr = ''
+
             datestr = self['date'].strftime('%Y-%m-%d %H:%M')
+
             return '#M{0} #C{1} #G{2} #W[{3}#W]'.format(datestr, author, str(self['subject']), tagstr)
 
         elif fmt == 'raw':
