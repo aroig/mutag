@@ -66,17 +66,17 @@ def get_profile(conf, opts):
     prof['trashtag'] = get_config_string(conf, name, 'trashtag')
     prof['trashfolder'] = get_config_string(conf, name, 'trashfolder')
 
-    gmailfolders = get_config_string(name, 'gmailfolders')
+    gmailfolders = get_config_string(conf, name, 'gmailfolders')
     if gmailfolders:
         prof['gmailfolders'] = set([f.strip() for f in gmailfolders.split(',')])
     else:
         prof['gmailfolders'] = set([])
 
-    prof['expiredays'] = get_config_int(name, 'expiredays', 100)
+    prof['expiredays'] = get_config_int(conf, name, 'expiredays', 100)
 
-    prof['mtimelist'] = get_config_path(name, 'mtimelist')
-    prof['lastmtime'] = get_config_path(name, 'lastmtime')
-    prof['tagrules'] = get_config_path(name, 'tagrules')
+    prof['mtimelist'] = get_config_path(conf, name, 'mtimelist')
+    prof['lastmtime'] = get_config_path(conf, name, 'lastmtime')
+    prof['tagrules'] = get_config_path(conf, name, 'tagrules')
 
     if opts.muhome: prof['muhome'] = os.path.expanduser(opts.muhome)
     if opts.muhome: prof['maildir'] = os.path.expanduser(opts.maildir)
