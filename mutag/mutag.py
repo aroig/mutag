@@ -45,7 +45,7 @@ class Mutag(object):
     def __init__(self, prof):
         self.muhome = prof['muhome']
         self.maildir = prof['maildir']
-        self.queue = prof['queue']
+        self.queuedir = prof['queuedir']
 
         self.under_git = os.path.exists(os.path.join(self.maildir, '.git'))
 
@@ -349,7 +349,7 @@ class Mutag(object):
 
 
     def queue(self):
-        qfiles = glob.glob(os.path.join(self.queue, '*.mail'))
+        qfiles = glob.glob(os.path.join(self.queuedir, '*.mail'))
         for it in self.parsefiles(qfiles):
             yield it
 

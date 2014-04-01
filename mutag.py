@@ -61,7 +61,7 @@ def get_profile(conf, opts):
 
     prof['muhome'] = get_config_path(conf, name, 'muhome')
     prof['maildir'] = get_config_path(conf, name, 'maildir')
-    prof['queue'] = get_config_path(conf, name, 'queue')
+    prof['queuedir'] = get_config_path(conf, name, 'queuedir')
 
     prof['trashtag'] = get_config_string(conf, name, 'trashtag')
     prof['trashfolder'] = get_config_string(conf, name, 'trashfolder')
