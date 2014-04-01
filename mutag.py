@@ -29,6 +29,27 @@ from mutag.mutag import Mutag, MutagError
 from mutag import __version__
 
 
+def get_config_path(conf, name, key, default=None):
+    if conf.has_option('profile %s' % name, key):
+        return os.path.expanduser(os.path.expandvars(conf.get('profile %s' % name, key)))
+    else:
+        return default
+
+
+def get_config_string(conf, name, key, default=None):
+    if conf.has_option('profile %s' % name, key):
+        return conf.get('profile %s' % name, key)
+    else:
+        return default
+
+
+def get_config_int(conf, name, key, default=0):
+    if conf.has_option('profile %s' % name, key):
+        return int(conf.get('profile %s' % name, key))
+    else:
+        return default
+
+
 def get_profile(conf, opts):
 
     if opts.profile: name = opts.profile
@@ -37,18 +58,25 @@ def get_profile(conf, opts):
     # TODO: catch nonexistent profile
 
     prof = {}
-    prof['muhome'] = os.path.expanduser(conf.get('profile %s' % name, 'muhome'))
-    prof['maildir'] = os.path.expanduser(conf.get('profile %s' % name, 'maildir'))
 
-    prof['trashtag'] = conf.get('profile %s' % name, 'trashtag')
-    prof['trashfolder'] = conf.get('profile %s' % name, 'trashfolder')
-    prof['gmailfolders'] = set([f.strip() for f in conf.get('profile %s' % name, 'gmailfolders').split(',')])
+    prof['muhome'] = get_config_path(conf, name, 'muhome')
+    prof['maildir'] = get_config_path(conf, name, 'maildir')
+    prof['queue'] = get_config_path(conf, name, 'queue')
 
-    prof['expiredays'] = int(conf.get('profile %s' % name, 'expiredays'))
+    prof['trashtag'] = get_config_string(conf, name, 'trashtag')
+    prof['trashfolder'] = get_config_string(conf, name, 'trashfolder')
 
-    prof['mtimelist'] = os.path.expanduser(conf.get('profile %s' % name, 'mtimelist'))
-    prof['lastmtime'] = os.path.expanduser(conf.get('profile %s' % name, 'lastmtime'))
-    prof['tagrules'] = os.path.expanduser(conf.get('profile %s' % name, 'tagrules'))
+    gmailfolders = get_config_string(name, 'gmailfolders')
+    if gmailfolders:
+        prof['gmailfolders'] = set([f.strip() for f in gmailfolders.split(',')])
+    else:
+        prof['gmailfolders'] = set([])
+
+    prof['expiredays'] = get_config_int(name, 'expiredays', 100)
+
+    prof['mtimelist'] = get_config_path(name, 'mtimelist')
+    prof['lastmtime'] = get_config_path(name, 'lastmtime')
+    prof['tagrules'] = get_config_path(name, 'tagrules')
 
     if opts.muhome: prof['muhome'] = os.path.expanduser(opts.muhome)
     if opts.muhome: prof['maildir'] = os.path.expanduser(opts.maildir)
