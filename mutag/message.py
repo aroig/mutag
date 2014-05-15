@@ -94,7 +94,10 @@ class Message(dict):
             else:
                 tagstr = ''
 
-            datestr = self['date'].strftime('%Y-%m-%d %H:%M')
+            if self['date']:
+                datestr = self['date'].strftime('%Y-%m-%d %H:%M')
+            else:
+                datestr = '<none>'
 
             return '#M{0} #C{1} #G{2} #W[{3}#W]'.format(datestr, author, str(self['subject']), tagstr)
 
