@@ -56,6 +56,6 @@ install:
 #	@install -Dm644 "completion/zsh/_$(NAME)" "$(DESTDIR)$(ZSHDIR)/_$(NAME)"
 #	@install -Dm644 "completion/bash/$(NAME)" "$(DESTDIR)$(BASHDIR)/$(NAME)"
 	@install -Dm644 "man/$(NAME).1" "$(DESTDIR)$(MANDIR)/$(NAME).1"
-	@install -Dm644 README "$(DESTDIR)$(DOCDIR)/README"
+	@install -Dm644 README.md "$(DESTDIR)$(DOCDIR)/README.md"
 #	@cp -R docs/* "$(DESTDIR)$(DOCDIR)"
 	@cp -R conf "$(DESTDIR)$(DOCDIR)/config"
