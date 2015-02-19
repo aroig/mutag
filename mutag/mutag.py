@@ -21,12 +21,14 @@
 import os
 import re
 import sys
-import imp
 import glob
 import shlex
 import shutil
 import subprocess
 import datetime
+
+import inspect
+import importlib.machinery
 
 import mutag.plistseq as plistseq
 from mutag.message import Message
@@ -125,16 +127,10 @@ class Mutag(object):
 
     def _load_tagrules(self):
         try:
-            fd = open(self.tagrules_path, 'r')
-            rawcode = fd.read()
-        except:
-            ui.print_error("Can't open tagrules at %s" % self.tagrules_path)
-            return
+            loader = importlib.machinery.SourceFileLoader("tagrules", self.tagrules_path)
+            module = loader.load_module("tagrules")
+            return module.TagRules(path=self.maildir)
 
-        try:
-            rules = imp.new_module('tagrules')
-            exec(rawcode, rules.__dict__)
-            return rules.TagRules(path=self.maildir)
         except Exception as err:
             ui.print_error("Exception loading tagrules %s\n%s" % (self.tagrules_path, str(err)))
             return
