@@ -239,7 +239,7 @@ class Mutag(object):
         args = ['--format=sexp']
         if thread:      args.append('--threads')
         if related:     args.append('--include-related')
-        if mtime:       args.append('--after=%d' % int(mtime))
+        if mtime:       args.append('--after=%d' % int(mtime - 600))
         if query:       args.extend(shlex.split(query))
         else:           args.append("")
 
