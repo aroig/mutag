@@ -126,14 +126,9 @@ class Mutag(object):
 
 
     def _load_tagrules(self):
-        try:
-            loader = importlib.machinery.SourceFileLoader("tagrules", self.tagrules_path)
-            module = loader.load_module("tagrules")
-            return module.TagRules(path=self.maildir)
-
-        except Exception as err:
-            ui.print_error("Exception loading tagrules %s\n%s" % (self.tagrules_path, str(err)))
-            return
+        loader = importlib.machinery.SourceFileLoader("tagrules", self.tagrules_path)
+        module = loader.load_module("tagrules")
+        return module.TagRules(path=self.maildir)
 
 
 
