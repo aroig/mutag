@@ -259,7 +259,7 @@ class Message(dict):
             leader = content[0:insertionpoint]
 
         if re.search(b'^' + headername + b':(.*)$', leader, flags = re.MULTILINE):
-            leader = re.sub(b'^' + headername + b':(.*)$', header, leader,
+            leader = re.sub(b'^' + headername + b':(.*)$', lambda x: header, leader,
                             flags = re.MULTILINE)
         else:
             leader = leader + newline + header
